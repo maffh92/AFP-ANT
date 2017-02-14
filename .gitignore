@@ -1,0 +1,5 @@
+*.hi
+*.o
+Ants
+a.out
+.*.sw?
