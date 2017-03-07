@@ -7,36 +7,33 @@ import Control.Monad
 import qualified AntState as A
 import AntGoto
 
+monad_test2 :: AntCode ()
 monad_test2 = mdo
-        
-        senseFood <- label
-        search A.Ahead A.Food (\begin -> mdo {
-            -- found food, move onto it if possible
-            move (goto begin); 
-            -- pick up the food
-            pickUp (goto begin); 
-            -- find home
-            goto senseHome; 
-        })
-
+       
+        begin <- label;
  
-        senseHome <- label
-        search A.Ahead A.Home (\begin -> mdo {
+        search A.Ahead A.Food (\exc -> mdo {
+            -- found food, move onto it if possible
+            move exc; 
+            -- pick up the food
+            pickUp exc; 
+        })
+ 
+        search A.Ahead A.Home (\exc -> mdo {
             -- found home
-            move (goto begin); 
+            move exc; 
             -- drop the food and go search for more
             ndrop;
-            goto senseFood;
         })
-  
-        goto senseFood
+
+        goto begin  
 
   where -- search for something, and run given commands if possible
         search dir what whenFound = mdo
             searchStart <- label
             sense dir what (mdo {
                 -- found it
-                whenFound searchStart
+                whenFound (goto searchStart) 
             }) (mdo {
                 -- didn't find it, search onwards
                 moveAnyDirection;
@@ -108,15 +105,15 @@ monad_test = mdo
      })
 
     goto senseFood -- go back to the beginning, why not.
-
+    
 
      
 
-mcompile :: AntCode a -> String
+mcompile :: AntCode () -> String
 mcompile = A.compile . compile . ant 0
 
---                                          commands   location label? ret
-newtype AntCode a = AntCode ((Int) -> ([Command], Int,  a))
+--                                    commands   location ret
+newtype AntCode a = AntCode ((Int) -> ([Command], Int,    a))
 
 antFn (AntCode fn) = fn
 ant start (AntCode fn) = cmds where (cmds, _, _) = fn start
