@@ -1,3 +1,4 @@
+{-#LANGUAGE DeriveFunctor,DeriveFoldable #-}
 module AntState where
 
 {- describes the output state machine -}
@@ -18,15 +19,18 @@ data Condition = Friend
                deriving (Show, Eq)
 
 type State = Int
-data Command   = Sense SenseDir Int Int Condition
-               | Mark Marker State
-               | Unmark Marker State
-               | PickUp State State
-               | Drop State
-               | Turn TurnDir State
-               | Move State State
-               | Flip Int State State
-               deriving (Show, Eq)
+--St is used as a State number.
+type Command = Command' Int  
+data Command' st  = Sense SenseDir st st Condition
+               | Mark Marker st
+               | Unmark Marker st
+               | PickUp st st
+               | Drop st
+               | Turn TurnDir st
+               | Move st st
+               | Flip Int st st
+               deriving (Show, Eq,Functor,Foldable)
+
 
 instance Show Marker where
     show Zero   = "0"
@@ -39,4 +43,3 @@ instance Show Marker where
 
 compile :: [Command] -> String
 compile = unlines . map show
-
