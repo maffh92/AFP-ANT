@@ -1,6 +1,9 @@
 module AntGoto where
 
 import qualified AntState as A
+import qualified Data.Map as M
+import Data.Maybe
+import Control.Monad.Fix
 
 {- describes an AST for a language with named labels and gotos -}
 
@@ -19,6 +22,10 @@ data Command = -- labels
              | Move String String
              | Flip Int String String
              deriving (Eq,Show)
+
+isLabel :: Command -> Bool
+isLabel (Label _) = True
+isLabel _         = False
 
 {- intermediate stage w/explicit marking of states -}
 data S2Lbl = S2State Int | S2Lbl String -- label or known state #
@@ -79,7 +86,64 @@ example = [ Label "SenseFood"
 {- compile the goto language into the ant state description -}
 compile :: [Command] -> [A.Command]
 compile cmds = compile_stage2 $ resolve lbls cmds' 
-    where (cmds', lbls) = compile_stage1 0 cmds
+    where (cmds', lbls) = compile_stage1 0 $ relabel cmds
+
+type LabelMap = M.Map String String
+
+{- find a fixpoint -}
+fixpoint :: (Eq a) => (a -> a) -> a -> a
+fixpoint fn val | val == val' = val
+                | otherwise   = fixpoint fn val'
+    where val' = fn val  
+
+relabel :: [Command] -> [Command]
+relabel cmds = fixpoint (step findAndRemove) $ cmds
+
+
+{- rename doubled-up labels (e.g. [Label x, Label y, Label z] -}
+renameDoubled :: LabelMap -> [Command] -> (LabelMap, [Command])
+renameDoubled mapping []   = (mapping, [])
+renameDoubled mapping cmds | null labels = let (mapping'', rest') = renameDoubled mapping $ tail cmds
+                                           in  (mapping'', (head cmds):rest')
+                           | otherwise   = let (mapping'', rest') = renameDoubled mapping' rest
+                                           in  (mapping'', (Label first):rest)
+    where labels    = takeWhile isLabel cmds
+          rest      = dropWhile isLabel cmds 
+                    
+          (Label first) = head labels
+          others        = tail labels
+                  
+          mapfn = foldl (.) id $ map (\(Label lbl) -> M.insert lbl first) others
+          mapping' = mapfn mapping
+
+
+{- find and remove label/goto pairs and doubled labels -}
+findAndRemove :: LabelMap -> [Command] -> (LabelMap, [Command])
+findAndRemove map []                        = (map, [])
+findAndRemove map ((Label x):(Goto y):rest) = let map' = M.insert x y map
+                                              in  findAndRemove map' rest
+findAndRemove map (cmd:cmds)                = let (map', cmds') = findAndRemove map cmds
+                                              in  (map', cmd:cmds')
+          
+{- relabel a command using a mapping -}
+
+findNewLabel :: LabelMap -> String -> String
+findNewLabel map lbl = fromMaybe lbl $ M.lookup lbl map
+
+relmapCmd :: LabelMap -> Command -> Command
+relmapCmd map (Goto x)        = Goto $ findNewLabel map x
+relmapCmd map (PickUp x y)    = PickUp (findNewLabel map x) (findNewLabel map y)
+relmapCmd map (Sense d x y c) = Sense d (findNewLabel map x) (findNewLabel map y) c
+relmapCmd map (Move x y)      = Move (findNewLabel map x) (findNewLabel map y)
+relmapCmd map (Flip p x y)    = Flip p (findNewLabel map x) (findNewLabel map y)
+relmapCmd _   cmd             = cmd 
+
+{- do one replacement step -}
+step :: (LabelMap -> [Command] -> (LabelMap, [Command])) -> [Command] -> [Command]
+step fn cmds = let (map', cmds') = fn M.empty cmds 
+               in  map (relmapCmd map') cmds'
+          
+          
 
 {- first stage compilation: figure out state sequence and label positions -}
 compile_stage1 :: Int -> [Command] -> ([S2Cmd], [(String, Int)])
@@ -131,6 +195,7 @@ resolve lbls (cmd:cmds) = cmd' : resolve lbls cmds
           cmd' = case cmd of
                       (S2Sense sd s1 s2 cond) -> S2Sense sd (rslv s1) (rslv s2) cond
                       (S2Mark m st)           -> S2Mark m (rslv st)
+                      (S2Unmark m st)         -> S2Unmark m (rslv st)
                       (S2PickUp s1 s2)        -> S2PickUp (rslv s1) (rslv s2)
                       (S2Drop st)             -> S2Drop (rslv st)
                       (S2Turn dir st)         -> S2Turn dir (rslv st)
