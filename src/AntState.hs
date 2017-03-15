@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveFoldable    #-}
+{-# LANGUAGE DeriveFunctor     #-}
+{-# LANGUAGE DeriveTraversable #-}
 module AntState where
 
 {- describes the output state machine -}
