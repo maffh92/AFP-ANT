@@ -22,16 +22,14 @@ type AntT m l a = TardisT (Program l) l m a
 
 type AntM l a = AntT Identity l a
 
-runAntT :: MonadFix m => AntT m Int a -> m (a, Program Int)
-runAntT ant = mdo
-  (a, (p,_)) <- runTardisT ant (Program (view entry p) M.empty, 0)
-  return (a, p)
+runAntT :: l -> AntT m l a -> m (a, (Program l, l))
+runAntT i m = runTardisT m (Program i M.empty, i)
 
-runAntM :: AntT Identity Int a -> (a, Program Int)
-runAntM = runIdentity . runAntT
+runAntM :: l -> AntT Identity l a -> (a, (Program l, l))
+runAntM i = runIdentity . runAntT i
 
 genProg :: AntT Identity Int a -> String
-genProg = showCmds . M.toList . view commands . snd . runAntM
+genProg = showCmds . M.toList . view commands . fst . snd . runAntM 0
 
 label :: MonadFix m => AntT m l l
 label = view entry <$> getFuture
