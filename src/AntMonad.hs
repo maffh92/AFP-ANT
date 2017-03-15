@@ -66,7 +66,7 @@ mcompile :: AntCode () -> String
 mcompile = A.compile . compile . ant 0  
 
 
-newtype AntCode a = AntCode (Int -> ([Command], Int, a))
+newtype AntCode a = AntCode (Int -> ([Command Int], Int, a))
 
 antFn (AntCode fn) = fn
 ant start (AntCode fn) = cmds where (cmds, _, _) = fn start

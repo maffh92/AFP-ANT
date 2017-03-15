@@ -84,7 +84,7 @@ example = [ Label "SenseFood"
           ]
 
 {- compile the goto language into the ant state description -}
-compile :: [Command] -> [A.Command]
+compile :: [Command] -> [A.Command Int]
 compile cmds = compile_stage2 $ resolve lbls cmds' 
     where (cmds', lbls) = compile_stage1 0 $ relabel cmds
 
@@ -204,7 +204,7 @@ resolve lbls (cmd:cmds) = cmd' : resolve lbls cmds
 
 
 {- stage 2 compilation, assumes labels have been resolved -}
-compile_stage2 :: [S2Cmd] -> [A.Command]
+compile_stage2 :: [S2Cmd] -> [A.Command Int]
 compile_stage2 = map translate
     where trLbl :: S2Lbl -> Int
           trLbl (S2State x) = x
