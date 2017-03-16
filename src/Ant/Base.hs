@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFoldable    #-}
 {-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveTraversable #-}
-module AntState where
+module Ant.Base where
 
 {- describes the output state machine -}
 data TurnDir   = Left | Right deriving (Show, Eq)
@@ -21,6 +21,7 @@ data Condition = Friend
                deriving (Show, Eq)
 
 type State = Int
+
 data Command a = Sense SenseDir a a Condition
                | Mark Marker a
                | Unmark Marker a

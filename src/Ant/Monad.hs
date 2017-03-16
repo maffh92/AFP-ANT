@@ -1,16 +1,45 @@
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE RecursiveDo #-}
-module AntMonadIII where
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE RecursiveDo                #-}
+{-# LANGUAGE TemplateHaskell            #-}
+module Ant.Monad
+  (
+  -- * Monad
+    AntT
+  , AntM
+  , runAntT
+  , runAntM
+  -- ** Basic combinators
+  , label
+  , goto
+  -- ** Non branching commands
+  , mark
+  , unmark
+  , drop
+  , turn
+  -- ** Branching commands.
+  , move
+  , flip
+  , sense
+  , pickup
+  -- ** Continuous version of Branching commands.
+  , move_
+  , flip_
+  , sense_
+  , pickup_
+  )where
 
-import           AntState as A
-import           Control.Lens hiding (at)
+import           Ant.Base                   as A
+
+import           Control.Applicative
+import           Control.Lens               hiding (at)
 import           Control.Monad.Fix
-import           Control.Monad.Trans.Tardis
-import Control.Applicative
+import           Control.Monad.Tardis.Class
+import           Control.Monad.Trans.Tardis (TardisT, runTardisT)
 import           Data.Map                   (Map)
 import qualified Data.Map                   as M
-import Prelude as P hiding (drop, flip)
+import           Prelude                    as P hiding (drop, flip)
 
+-- | A Program
 data Program a =
   Program { _entry     :: a
           , _commands  :: Map a (Command a) }
@@ -18,29 +47,40 @@ data Program a =
 
 makeLenses ''Program
 
-type AntT m l a = TardisT (Program l) l m a
+-- | AntT monad transformer is parametrized by the underlying monad @m@,
+-- and the type of labels @l@.
+newtype AntT m l a =
+  AntT { runAnt :: TardisT (Program l) l m a
+         -- ^ A AntT is a TardisT monad where the `forward-traveling`
+         -- state is the labels, and the `backward-traveling` state is
+         -- a Program.
+       } deriving (Functor, Applicative, Monad
+                  , MonadFix, MonadTardis (Program l) l)
 
+
+-- | 'AntM' is a specialized version of 'AntT' to the Identity monad.
 type AntM l a = AntT Identity l a
 
-runAntT :: l -> AntT m l a -> m (a, (Program l, l))
-runAntT i m = runTardisT m (Program i M.empty, i)
 
+-- | Run an 'AntT' computation given the initial label @l@.
+runAntT :: l -> AntT m l a -> m (a, (Program l, l))
+runAntT i = (`runTardisT` (Program i M.empty, i)) . runAnt
+
+-- | Specialized version of 'runAntT' to 'Identity' monad.
 runAntM :: l -> AntT Identity l a -> (a, (Program l, l))
 runAntM i = runIdentity . runAntT i
 
-genProg :: AntT Identity Int a -> String
-genProg = showCmds . M.toList . view commands . fst . snd . runAntM 0
-
+-- | Get the label at the current point.
 label :: MonadFix m => AntT m l l
 label = view entry <$> getFuture
 
--- | Set the entry point for the program to the given label
+-- | Set the label at the current point.
 goto :: MonadFix m => l -> AntT m l ()
 goto l = modifyBackwards (set entry l)
 
 
--- Add a new command to the Program.
--- The `forward` state gets updated, and the cmmand added to the map
+-- | Add a new command to the Program.
+-- The `forward` state gets updated, and the cmommand added to the map
 -- with the index being the current `forward` state.
 addCmd :: (MonadFix m, Ord l, Enum l)
        => Command l -> AntT m l ()
@@ -50,15 +90,17 @@ addCmd cmd = do
   modifyBackwards (\prog -> prog & commands %~ M.insert i cmd
                                  & entry .~ i)
 
+
+-- | Given a 'Command' and branches in case of succees or failure
 branchingCmd :: (MonadFix m, Ord l, Enum l)
              => (l -> l -> Command l)
-             -> AntT m l a
-             -> AntT m l a
+             -> AntT m l a -- ^ Computation in case of success
+             -> AntT m l a -- ^ Computation in case of failure
              -> AntT m l ()
 branchingCmd cmd success failed = mdo
   addCmd (cmd sucessLabel failedLabel)
   sucessLabel <- label <* success <* goto next
-  failedLabel <- label <* failed  <* goto next
+  failedLabel <- label <* failed
   next        <- label
   return ()
 
@@ -88,35 +130,37 @@ drop = singleCmd Drop
 turn :: (MonadFix m, Ord l, Enum l) => TurnDir -> AntT m l ()
 turn = singleCmd . Turn
 
--- Branching commands
+-- | Move
 move :: (MonadFix m, Ord l, Enum l)
-     => AntT m l ()
-     -> AntT m l ()
+     => AntT m l () -- ^ Success
+     -> AntT m l () -- ^ Failure
      -> AntT m l ()
 move = branchingCmd Move
 
+-- | PickUp
 pickup :: (MonadFix m, Ord l, Enum l)
-       => AntT m l ()
-       -> AntT m l ()
+       => AntT m l () -- ^ Success
+       -> AntT m l () -- ^ Failure
        -> AntT m l ()
 pickup = branchingCmd PickUp
 
+-- | Sense
 sense :: (MonadFix m, Ord l, Enum l)
      => SenseDir
      -> Condition
-     -> AntT m l ()
-     -> AntT m l ()
+     -> AntT m l () -- ^ Success
+     -> AntT m l () -- ^ Failure
      -> AntT m l ()
 sense c s = branchingCmd (\su fa -> Sense c su fa s)
 
+-- | Flip
 flip :: (MonadFix m, Ord l, Enum l)
      => Int
-     -> AntT m l ()
-     -> AntT m l ()
+     -> AntT m l () -- ^ Success
+     -> AntT m l () -- ^ Failure
      -> AntT m l ()
 flip n = branchingCmd (Flip n)
 
--- No branching version of branching commands
 pickup_ :: (MonadFix m, Ord l, Enum l)
        => AntT m l ()
        -> AntT m l ()
@@ -168,15 +212,11 @@ monad_test = mdo
      )
 
     senseHome <- label
-    sense A.Ahead A.Home (mdo {
+    sense A.Ahead A.Home (
         -- we are home!
-        move_ (goto senseHome);
+        move  (drop >> goto senseFood) (goto senseHome)
 
-        -- drop the food and go search for more
-        drop;
-        goto senseFood;
-
-     }) (mdo {
+     ) (mdo {
         -- we are not home, so either go left,
         notHome <- label;
         flip 3 (turn A.Left) (mdo
@@ -188,4 +228,3 @@ monad_test = mdo
         );
         goto senseHome;
      })
-

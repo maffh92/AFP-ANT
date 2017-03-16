@@ -15,9 +15,9 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     AntGoto,
-                       AntState,
-                       AntMonadIII
+  exposed-modules:     Ant.Monad,
+                       Ant.Base,
+                       Optimization
   build-depends:       base >= 4.7 && < 5,
                        containers,
                        lens,
