@@ -17,7 +17,7 @@ library
   hs-source-dirs:      src
   other-modules:       Ant.Base,
                        Ant.Monad,
-                       Optimization
+                       Ant.Optimization
   exposed-modules:     Ant,
                        Examples
   build-depends:       base >= 4.7 && < 5,

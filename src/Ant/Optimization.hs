@@ -1,4 +1,4 @@
-module Optimization where
+module Ant.Optimization where
 
 import           Ant.Base
 import           Data.List
@@ -29,11 +29,11 @@ refreshStates cmds new = map (updateStates mapOldToNew) new
 
 
 updateStates :: Eq k => [(k,a)] -> Command k -> Command a
-updateStates env cmd = fmap (`lookup'` env) cmd
+updateStates env = fmap (`lookup'` env)
 
 --Need to add staging to the remove deadcode
 removeDeadCode :: [Command'] -> [Command']
-removeDeadCode original = 
+removeDeadCode original =
                       let cmdBools = zip original $ replicate (length original) False
                           cmds' = notDead cmdBools [0]
                           notDead' = foldr (\(c,p) b -> if p then c:b else b) [] cmds'
@@ -42,7 +42,7 @@ removeDeadCode original =
     notDead :: [(Command',Bool)] -> [Int] -> [(Command',Bool)]
     notDead cmds [] = cmds
     notDead cmds (n:xs) = notDead updatedCmd (collectSt++xs)
-        where collectSt | notPassed = foldMap (:[]) $ current
+        where collectSt | notPassed = foldMap (:[]) current
                         | otherwise = []
               updatedCmd | notPassed = updateList n (current,True) cmds
                          | otherwise = cmds
