@@ -2,6 +2,7 @@
 
 module Abstractions where
 import Control.Monad.Fix
+import Control.Monad
 import Ant
 
 abstr_test :: (Label l, MonadFix m) => AntT m l ()
@@ -55,45 +56,54 @@ infixr 4 :=:
 infixr 3 :&:
 infixr 2 :|:
 
+-- | Do nothing.
 nop :: (Label l, MonadFix m) => AntT m l ()
 nop = mdo
   flip'_ 1 (goto next)
-  next <- label
+  next   <- label
   return ()
 
-nops :: (MonadFix m, Label l) => Int -> AntT m l ()
-nops n = sequence_ $ take n $ repeat nop
+-- | Do nothing for @n@ times.
+nops :: (MonadFix m, Label l)  => Int -> AntT m l ()
+nops n = replicateM_ n nop
+
+-- | While some condition holds execute.
+-- while :: (Label l, MonadFix m) => SenseTest -> AntT m l ()   -> AntT m l ()
+-- while cond body = mdo
+--   l     <- label
+--   ifSense cond (goto l) (goto break)
+--   break <- label
+--   return ()
+
+-- -- |Investigate the environment and branch accordingly
+-- ifSense :: (Label l, MonadFix m) => SenseTest -> l -> l -> AntT m l ()
+-- ifSense T              ifT ifF = goto ifT
+-- ifSense F              ifT ifF = goto ifF
+-- ifSense (dir :=: what) ifT ifF = sense dir what ifT ifF
+-- ifSense (a   :&: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a (ifSense b ifT' ifF') ifF')
+-- ifSense (a   :|: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a ifT' (ifSense b ifT' ifF'))
 
 
--- |Investigate the environment and branch accordingly
-ifSense :: (Label l, MonadFix m) => SenseTest -> AntT m l () -> AntT m l () -> AntT m l ()
-ifSense T              ifT ifF = ifT
-ifSense F              ifT ifF = ifF
-ifSense (dir :=: what) ifT ifF = sense dir what ifT ifF
-ifSense (a   :&: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a (ifSense b ifT' ifF') ifF')
-ifSense (a   :|: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a ifT' (ifSense b ifT' ifF'))
+
+-- -- |Optimalization of a routine with two subroutines.
+-- -- |Instead of generating the same code several times, include the code once and generate entry points
+-- -- |instead.
+-- optimize2 :: (MonadFix m) => AntT m l a
+--                           -> AntT m l b
+--                           -> (AntT m l () -> AntT m l () -> AntT m l c)
+--                           -> AntT m l c
+-- optimize2 sub1 sub2 main = mdo
+--       val <- main (goto sub1') (goto sub2')
+--       goto out
 
 
+--       sub1' <- label
+--       sub1
+--       goto out
 
--- |Optimalization of a routine with two subroutines.
--- |Instead of generating the same code several times, include the code once and generate entry points
--- |instead.
-optimize2 :: (MonadFix m) => AntT m l a
-                          -> AntT m l b
-                          -> (AntT m l () -> AntT m l () -> AntT m l c)
-                          -> AntT m l c
-optimize2 sub1 sub2 main = mdo
-      val <- main (goto sub1') (goto sub2')
-      goto out
-
-
-      sub1' <- label
-      sub1
-      goto out
-
-      sub2' <- label
-      sub2
-      goto out
+--       sub2' <- label
+--       sub2
+--       goto out
      
-      out <- label
-      return val
+--       out <- label
+--       return val

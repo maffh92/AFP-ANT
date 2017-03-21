@@ -62,13 +62,16 @@ class Ord l => Label l where
   suc  :: l -> l
 
 newtype L = L { _lab :: Int }
-  deriving (Show, Eq, Ord)
+  deriving (Eq, Ord)
 
 makeLenses ''L
 
 instance Label L where
   zero = L 0
   suc  = lab %~ (+1)
+
+instance Show L where
+  show = show . view lab
 
 --------------------------------------------------------------------------------
 -- Monad

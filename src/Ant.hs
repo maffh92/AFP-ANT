@@ -9,5 +9,5 @@ import           Ant.Monad
 import           Control.Lens
 import           Data.Map     (toList)
 
-compile :: (Show l, Label l) => AntM l () -> String
+compile :: AntM L () -> String
 compile = showCmds . toList . view commands . fst . snd . runAntM zero
