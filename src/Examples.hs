@@ -3,7 +3,7 @@ module Examples where
 
 import Ant
 
-monad_test :: AntM Int ()
+monad_test :: AntM L ()
 monad_test = mdo
     senseFood <- label
     sense Ahead Food

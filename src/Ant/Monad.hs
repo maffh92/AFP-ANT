@@ -26,13 +26,16 @@ module Ant.Monad
   , flip'_
   , sense_
   , pickup_
+  -- * Program
   , Program
   , commands
+  -- * Labels
+  , Label(..)
+  , L
   )where
 
 import           Ant.Base                   as A
 
-import           Control.Applicative
 import           Control.Lens               hiding (at)
 import           Control.Monad.Fix
 import           Control.Monad.Tardis.Class
@@ -40,13 +43,35 @@ import           Control.Monad.Trans.Tardis (TardisT, runTardisT)
 import           Data.Map                   (Map)
 import qualified Data.Map                   as M
 
+--------------------------------------------------------------------------------
+-- Progam
+
 -- | A Program
-data Program a =
-  Program { _entry     :: a
-          , _commands  :: Map a (Command a) }
+data Program l =
+  Program { _entry     :: l
+          , _commands  :: Map l (Command l) }
           deriving (Eq, Show)
 
 makeLenses ''Program
+
+--------------------------------------------------------------------------------
+-- Label
+
+class Ord l => Label l where
+  zero :: l
+  suc  :: l -> l
+
+newtype L = L { _lab :: Int }
+  deriving (Show, Eq, Ord)
+
+makeLenses ''L
+
+instance Label L where
+  zero = L 0
+  suc  = lab %~ (+1)
+
+--------------------------------------------------------------------------------
+-- Monad
 
 -- | AntT monad transformer is parametrized by the underlying monad @m@,
 -- and the type of labels @l@.
@@ -83,17 +108,17 @@ goto l = modifyBackwards (set entry l)
 -- | Add a new command to the Program.
 -- The `forward` state gets updated, and the cmommand added to the map
 -- with the index being the current `forward` state.
-addCmd :: (MonadFix m, Ord l, Enum l)
+addCmd :: (MonadFix m, Label l)
        => Command l -> AntT m l ()
 addCmd cmd = do
   i <- getPast
-  modifyForwards  succ
+  modifyForwards  suc
   modifyBackwards (\prog -> prog & commands %~ M.insert i cmd
                                  & entry .~ i)
 
 
 -- | Given a 'Command' and branches in case of succees or failure
-branchingCmd :: (MonadFix m, Ord l, Enum l)
+branchingCmd :: (MonadFix m, Label l)
              => (l -> l -> Command l)
              -> AntT m l a -- ^ Computation in case of success
              -> AntT m l a -- ^ Computation in case of failure
@@ -107,46 +132,49 @@ branchingCmd cmd success failed = mdo
 
 -- | A command that continues is a special case of a branching
 -- command.
-singleCmd :: (MonadFix m, Ord l, Enum l)
+singleCmd :: (MonadFix m, Label l)
            => (l -> Command l)
            -> AntT m l ()
 singleCmd cmd =
   branchingCmd (const . cmd) (return ()) (return ())
 
-noBranchingCmd :: (MonadFix m, Ord l, Enum l)
+noBranchingCmd :: (MonadFix m, Label l)
                => (l -> l -> Command l)
                -> AntT m l ()
                -> AntT m l ()
 noBranchingCmd cmd = branchingCmd cmd (return ())
 
-mark :: (MonadFix m, Ord l, Enum l) => Marker -> AntT m l ()
+--------------------------------------------------------------------------------
+-- Non branching commands
+
+mark :: (MonadFix m, Label l) => Marker -> AntT m l ()
 mark = singleCmd .  Mark
 
-unmark :: (MonadFix m, Ord l, Enum l) => Marker -> AntT m l ()
+unmark :: (MonadFix m, Label l) => Marker -> AntT m l ()
 unmark = singleCmd . Unmark
 
-drop' :: (MonadFix m, Ord l, Enum l) => AntT m l ()
+drop' :: (MonadFix m, Label l) => AntT m l ()
 drop' = singleCmd Drop
 
-turn :: (MonadFix m, Ord l, Enum l) => TurnDir -> AntT m l ()
+turn :: (MonadFix m, Label l) => TurnDir -> AntT m l ()
 turn = singleCmd . Turn
 
--- | Move
-move :: (MonadFix m, Ord l, Enum l)
+--------------------------------------------------------------------------------
+-- Branching commands
+
+move :: (MonadFix m, Label l)
      => AntT m l () -- ^ Success
      -> AntT m l () -- ^ Failure
      -> AntT m l ()
 move = branchingCmd Move
 
--- | PickUp
-pickup :: (MonadFix m, Ord l, Enum l)
+pickup :: (MonadFix m, Label l)
        => AntT m l () -- ^ Success
        -> AntT m l () -- ^ Failure
        -> AntT m l ()
 pickup = branchingCmd PickUp
 
--- | Sense
-sense :: (MonadFix m, Ord l, Enum l)
+sense :: (MonadFix m, Label l)
      => SenseDir
      -> Condition
      -> AntT m l () -- ^ Success
@@ -154,32 +182,33 @@ sense :: (MonadFix m, Ord l, Enum l)
      -> AntT m l ()
 sense c s = branchingCmd (\su fa -> Sense c su fa s)
 
--- | Flip
-flip' :: (MonadFix m, Ord l, Enum l)
+flip' :: (MonadFix m, Label l)
      => Int
      -> AntT m l () -- ^ Success
      -> AntT m l () -- ^ Failure
      -> AntT m l ()
 flip' n = branchingCmd (Flip n)
 
-pickup_ :: (MonadFix m, Ord l, Enum l)
+--------------------------------------------------------------------------------
+-- Branching commands that only branch in one argument.
+
+move_ :: (MonadFix m, Label l)
+      => AntT m l ()
+      -> AntT m l ()
+move_ = noBranchingCmd Move
+pickup_ :: (MonadFix m, Label l)
        => AntT m l ()
        -> AntT m l ()
 pickup_ = noBranchingCmd PickUp
 
-move_ :: (MonadFix m, Ord l, Enum l)
-      => AntT m l ()
-      -> AntT m l ()
-move_ = noBranchingCmd Move
-
-sense_ :: (MonadFix m, Ord l, Enum l)
+sense_ :: (MonadFix m, Label l)
      => SenseDir
      -> Condition
      -> AntT m l ()
      -> AntT m l ()
 sense_ c s = noBranchingCmd (\su fa -> Sense c su fa s)
 
-flip'_ :: (MonadFix m, Ord l, Enum l)
+flip'_ :: (MonadFix m, Label l)
       => Int
       -> AntT m l ()
       -> AntT m l ()
