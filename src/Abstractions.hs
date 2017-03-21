@@ -6,13 +6,13 @@ import Ant.Base
 import Ant.Monad
 
 abstr_test :: (Enum l, Ord l, MonadFix m) => AntT m l ()
-abstr_test = mdo
-    loop (\cont brk -> mdo
+abstr_test = 
+    loop (\cont brk -> do
         search Ahead Food (\exc -> move_ exc >> pickup_ exc)
         search Ahead Home (\exc -> move_ exc >> drop')
      )
  where
-     
+
     search dir what whenFound = loop (\continue break -> mdo
         sense dir what (whenFound continue >> break) (moveAnyDir >> continue)
      )

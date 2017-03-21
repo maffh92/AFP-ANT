@@ -19,13 +19,13 @@ library
                        Ant.Monad,
                        Optimization
   exposed-modules:     Ant,
+                       Abstractions,
                        Examples
   build-depends:       base >= 4.7 && < 5,
                        containers,
                        lens,
                        tardis
   default-language:    Haskell2010
-  default-extensions:          RecursiveDo
 
 executable AFP-ANT-exe
   hs-source-dirs:      app

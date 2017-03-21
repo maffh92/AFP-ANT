@@ -26,6 +26,8 @@ module Ant.Monad
   , flip'_
   , sense_
   , pickup_
+  , Program
+  , commands
   )where
 
 import           Ant.Base                   as A
