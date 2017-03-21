@@ -4,7 +4,7 @@
 module Ant.Base where
 
 {- describes the output state machine -}
-data TurnDir   = Left | Right deriving (Show, Eq)
+data TurnDir   = DLeft | DRight deriving (Show, Eq)
 data SenseDir  = Here | Ahead | LeftAhead | RightAhead deriving (Show, Eq)
 data Marker    = Zero | One | Two | Three | Four | Five deriving Eq
 

@@ -14,16 +14,16 @@ module Ant.Monad
   -- ** Non branching commands
   , mark
   , unmark
-  , drop
+  , drop'
   , turn
   -- ** Branching commands.
   , move
-  , flip
+  , flip'
   , sense
   , pickup
   -- ** Continuous version of Branching commands.
   , move_
-  , flip_
+  , flip'_
   , sense_
   , pickup_
   )where
@@ -37,7 +37,6 @@ import           Control.Monad.Tardis.Class
 import           Control.Monad.Trans.Tardis (TardisT, runTardisT)
 import           Data.Map                   (Map)
 import qualified Data.Map                   as M
-import           Prelude                    as P hiding (drop, flip)
 
 -- | A Program
 data Program a =
@@ -124,8 +123,8 @@ mark = singleCmd .  Mark
 unmark :: (MonadFix m, Ord l, Enum l) => Marker -> AntT m l ()
 unmark = singleCmd . Unmark
 
-drop :: (MonadFix m, Ord l, Enum l) => AntT m l ()
-drop = singleCmd Drop
+drop' :: (MonadFix m, Ord l, Enum l) => AntT m l ()
+drop' = singleCmd Drop
 
 turn :: (MonadFix m, Ord l, Enum l) => TurnDir -> AntT m l ()
 turn = singleCmd . Turn
@@ -154,12 +153,12 @@ sense :: (MonadFix m, Ord l, Enum l)
 sense c s = branchingCmd (\su fa -> Sense c su fa s)
 
 -- | Flip
-flip :: (MonadFix m, Ord l, Enum l)
+flip' :: (MonadFix m, Ord l, Enum l)
      => Int
      -> AntT m l () -- ^ Success
      -> AntT m l () -- ^ Failure
      -> AntT m l ()
-flip n = branchingCmd (Flip n)
+flip' n = branchingCmd (Flip n)
 
 pickup_ :: (MonadFix m, Ord l, Enum l)
        => AntT m l ()
@@ -178,53 +177,8 @@ sense_ :: (MonadFix m, Ord l, Enum l)
      -> AntT m l ()
 sense_ c s = noBranchingCmd (\su fa -> Sense c su fa s)
 
-flip_ :: (MonadFix m, Ord l, Enum l)
+flip'_ :: (MonadFix m, Ord l, Enum l)
       => Int
       -> AntT m l ()
       -> AntT m l ()
-flip_ n = noBranchingCmd (Flip n)
-
-
-monad_test :: (MonadFix m, Enum l, Ord l) => AntT m l ()
-monad_test = mdo
-    senseFood <- label
-    sense A.Ahead A.Food
-      (mdo
-        -- there is food.
-        -- move, go back if fails
-        move_   (goto senseFood)
-        -- pick up the food
-        pickup_ (goto senseFood)
-
-        -- go home
-        goto senseHome;
-      )
-      (mdo
-        -- there is no food, so either go left,
-        noFood <- label
-
-        flip 3 (turn A.Left)
-            -- or go right,
-            (flip 2 (turn A.Right)
-               -- or go forward
-               (move_ (goto noFood)))
-        goto senseFood
-     )
-
-    senseHome <- label
-    sense A.Ahead A.Home (
-        -- we are home!
-        move  (drop >> goto senseFood) (goto senseHome)
-
-     ) (mdo {
-        -- we are not home, so either go left,
-        notHome <- label;
-        flip 3 (turn A.Left) (mdo
-           -- or go right,
-           flip 2 (turn A.Right) (mdo
-              -- or go forward
-              move_ (goto notHome)
-            )
-        );
-        goto senseHome;
-     })
+flip'_ n = noBranchingCmd (Flip n)

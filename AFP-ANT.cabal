@@ -15,14 +15,17 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Ant.Monad,
-                       Ant.Base,
+  other-modules:       Ant.Base,
+                       Ant.Monad,
                        Optimization
+  exposed-modules:     Ant,
+                       Examples
   build-depends:       base >= 4.7 && < 5,
                        containers,
                        lens,
                        tardis
   default-language:    Haskell2010
+  default-extensions:          RecursiveDo
 
 executable AFP-ANT-exe
   hs-source-dirs:      app
