@@ -1,13 +1,110 @@
 module Ant
-  ( module Ant.Base
-  , module Ant.Monad
+  ( module Ant.Monad
+  -- ** Condition
+  , Condition
+  , friend
+  , foe
+  , friendWithFood
+  , foeWithFood
+  , food
+  , rock
+  , marker
+  , foeMarker
+  , home
+  , foeHome
+  -- ** Sensor direction
+  , SenseDir
+  , here
+  , ahead
+  , leftAhed
+  , rightAhead
+  -- ** Marker
+  , Marker
+  , zero
+  , one
+  , two
+  , three
+  , four
+  , five
+  -- ** Turning direction
+  , TurnDir
+  , left
+  , right
+  -- ** Code generation
   , compile
   ) where
 
 import           Ant.Base
 import           Ant.Monad
+
 import           Control.Lens
 import           Data.Map     (toList)
 
 compile :: AntM L () -> String
-compile = showCmds . toList . view commands . fst . snd . runAntM zero
+compile = showCmds . toList . view commands . fst . snd . runAntM z
+
+friend :: Condition
+friend = Friend
+
+foe :: Condition
+foe = Foe
+
+friendWithFood :: Condition
+friendWithFood = FriendWithFood
+
+foeWithFood :: Condition
+foeWithFood = FoeWithFood
+
+food :: Condition
+food = Food
+
+rock :: Condition
+rock = Rock
+
+marker :: Marker -> Condition
+marker = Marker
+
+foeMarker :: Condition
+foeMarker = FoeMarker
+
+home :: Condition
+home = Home
+
+foeHome :: Condition
+foeHome = FoeHome
+
+here :: SenseDir
+here = Here
+
+ahead :: SenseDir
+ahead = Ahead
+
+leftAhed :: SenseDir
+leftAhed = LeftAhead
+
+rightAhead :: SenseDir
+rightAhead = RightAhead
+
+zero :: Marker
+zero = Zero
+
+one :: Marker
+one = One
+
+two :: Marker
+two = Two
+
+three :: Marker
+three = Three
+
+four :: Marker
+four = Four
+
+five :: Marker
+five = Five
+
+left :: TurnDir
+left = DLeft
+
+right :: TurnDir
+right = DRight

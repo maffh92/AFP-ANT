@@ -8,8 +8,8 @@ import Ant
 abstr_test :: (Label l, MonadFix m) => AntT m l ()
 abstr_test = mdo
     loop (\cont brk -> mdo
-        search Ahead Food (\exc -> move_ exc >> pickup_ exc)
-        search Ahead Home (\exc -> move_ exc >> drop')
+        search ahead food (\exc -> move_ exc >> pickup_ exc)
+        search ahead home (\exc -> move_ exc >> drop')
      )
  where
 
@@ -17,7 +17,7 @@ abstr_test = mdo
         sense dir what (whenFound continue >> break) (moveAnyDir >> continue)
      )
 
-    moveAnyDir = redo (\exc -> choose [turn DLeft, turn DRight, move_ exc])
+    moveAnyDir = redo (\exc -> choose [turn left, turn right, move_ exc])
 
 
 
@@ -56,12 +56,15 @@ infixr 4 :=:
 infixr 3 :&:
 infixr 2 :|:
 
--- | Do nothing.
+cont :: (Label l, MonadFix m) => (l -> AntT m l a) -> AntT m l a
+cont c = mdo
+  a <- c l
+  l <- label
+  return a
+
+-- | Do nothing.nt
 nop :: (Label l, MonadFix m) => AntT m l ()
-nop = mdo
-  flip'_ 1 (goto next)
-  next   <- label
-  return ()
+nop = cont (flip'_ 1 . goto)
 
 -- | Do nothing for @n@ times.
 nops :: (MonadFix m, Label l)  => Int -> AntT m l ()
@@ -75,11 +78,16 @@ nops n = replicateM_ n nop
 --   break <- label
 --   return ()
 
--- -- |Investigate the environment and branch accordingly
--- ifSense :: (Label l, MonadFix m) => SenseTest -> l -> l -> AntT m l ()
--- ifSense T              ifT ifF = goto ifT
--- ifSense F              ifT ifF = goto ifF
--- ifSense (dir :=: what) ifT ifF = sense dir what ifT ifF
+-- |Investigate the environment and branch accordingly
+-- if' :: (MonadFix m, Label l) => SenseTest -> AntT m l () -> AntT m l () -> AntT m l ()
+-- if' T              t f = t
+-- if' F              t f = t
+-- if' (dir :=: what) t f = sense dir what t f
+-- if' (a   :&: b   ) t f = mdo
+--   t_label <- label <* t
+--   f_label <- label <* f
+-- if' (a   :|: b   ) ifT ifF = 
+
 -- ifSense (a   :&: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a (ifSense b ifT' ifF') ifF')
 -- ifSense (a   :|: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a ifT' (ifSense b ifT' ifF'))
 

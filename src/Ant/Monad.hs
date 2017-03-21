@@ -57,18 +57,20 @@ makeLenses ''Program
 --------------------------------------------------------------------------------
 -- Label
 
+-- | The class of Labels.
 class Ord l => Label l where
-  zero :: l
-  suc  :: l -> l
+  z :: l
+  s :: l -> l
 
+-- | Cannonical implementation of Label.
 newtype L = L { _lab :: Int }
   deriving (Eq, Ord)
 
 makeLenses ''L
 
 instance Label L where
-  zero = L 0
-  suc  = lab %~ (+1)
+  z = L 0
+  s = lab %~ (+1)
 
 instance Show L where
   show = show . view lab
@@ -107,7 +109,6 @@ label = view entry <$> getFuture
 goto :: MonadFix m => l -> AntT m l ()
 goto l = modifyBackwards (set entry l)
 
-
 -- | Add a new command to the Program.
 -- The `forward` state gets updated, and the cmommand added to the map
 -- with the index being the current `forward` state.
@@ -115,7 +116,7 @@ addCmd :: (MonadFix m, Label l)
        => Command l -> AntT m l ()
 addCmd cmd = do
   i <- getPast
-  modifyForwards  suc
+  modifyForwards  s
   modifyBackwards (\prog -> prog & commands %~ M.insert i cmd
                                  & entry .~ i)
 
