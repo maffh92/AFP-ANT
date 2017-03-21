@@ -70,8 +70,9 @@ ifSense :: (Label l, MonadFix m) => SenseTest -> AntT m l () -> AntT m l () -> A
 ifSense T              ifT ifF = ifT
 ifSense F              ifT ifF = ifF
 ifSense (dir :=: what) ifT ifF = sense dir what ifT ifF
-ifSense (a   :&: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a (ifSense b ifT' ifF') ifT')
+ifSense (a   :&: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a (ifSense b ifT' ifF') ifF')
 ifSense (a   :|: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a ifT' (ifSense b ifT' ifF'))
+
 
 
 -- |Optimalization of a routine with two subroutines.
@@ -92,6 +93,7 @@ optimize2 sub1 sub2 main = mdo
 
       sub2' <- label
       sub2
-
+      goto out
+     
       out <- label
       return val
