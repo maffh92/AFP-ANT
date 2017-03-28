@@ -53,7 +53,19 @@ data Condition
   | FoeMarker
   | Home
   | FoeHome
-  deriving (Show, Eq)
+  deriving Eq
+
+instance Show Condition where
+  show Friend         = "Friend"
+  show Foe            = "Foe"
+  show FriendWithFood = "FriendWithFood"
+  show FoeWithFood    = "FoeWithFood"
+  show Food           = "Food"
+  show Rock           = "Rock"
+  show (Marker l)     = show l
+  show FoeMarker      = "FoeMarker"
+  show Home           = "Home"
+  show FoeHome        = "FoeHome"
 
 type State = Int
 
