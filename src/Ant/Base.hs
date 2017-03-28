@@ -7,7 +7,11 @@ module Ant.Base where
 data TurnDir
   = DLeft
   | DRight
-  deriving (Show, Eq)
+  deriving Eq
+
+instance Show TurnDir where
+  show DLeft  = "Left"
+  show DRight = "Right"
 
 data SenseDir
   = Here
