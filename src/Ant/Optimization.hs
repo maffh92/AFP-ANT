@@ -1,8 +1,22 @@
+{-# LANGUAGE DeriveFoldable      #-}
+{-# LANGUAGE DeriveFunctor       #-}
+{-# LANGUAGE DeriveTraversable   #-}
+{-# LANGUAGE RecursiveDo         #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell     #-}
 module Ant.Optimization where
 
 import           Ant.Base
+import           Ant.Monad
 import           Data.List
 import           Data.Maybe
+
+import           Control.Lens
+import           Data.Foldable
+import           Data.Map      (Map)
+import qualified Data.Map as M
+import           Data.Set (Set)
+import qualified Data.Set as S
 
 type Command' = Command Int
 --Delete duplicates
@@ -59,8 +73,43 @@ updateList n a env = f $ splitAt n env
 lookup' c xs = fromJust $ lookup c xs
 
 test xs = zip xs (replicate (length xs) False)
+
 test1 :: [Command']
 test1 = [Move 2 2,Move 0 1, Move 0 3, Move 0 1]
 
 test2 :: [Command']
 test2 = [Move 0 1, Move 0 1]
+
+--------------------------------------------------------------------------------
+  -- Unreachable code optimization
+
+-- All labels that are reachable from the entry point.
+reachable :: Ord l => Program l -> [l]
+reachable prog = reach (S.singleton (prog ^. entry))
+                       (prog ^. entry)
+  where
+    reach vs l =
+      (l:) . concatMap (reach (S.insert l vs))
+           . filter (not . flip S.member vs)   . concatMap toList
+           . maybeToList . M.lookup l $ (prog ^. commands)
+
+-- | All labels that are not reachable.
+unreachable :: Ord l => Program l -> [l]
+unreachable prog = M.keys (prog ^. commands) \\ reachable prog
+
+-- | Remove all unreachable labels from the Program.
+unreachableOpt :: Ord l => Program l -> Program l
+unreachableOpt prog =
+  prog & commands %~ flip (foldl (flip M.delete))
+                          (unreachable prog)
+test3 :: Program L
+test3 = fst . snd . runAntM z $ mdo
+  init <- label
+  drop'
+  goto finish
+  drop'
+  drop'
+  finish <- label
+  goto init
+  drop'
+  goto init

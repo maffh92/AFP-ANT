@@ -9,6 +9,8 @@ module Ant
   , food
   , rock
   , marker
+  , mark
+  , unmark
   , foeMarker
   , home
   , foeHome
@@ -16,7 +18,7 @@ module Ant
   , SenseDir
   , here
   , ahead
-  , leftAhed
+  , leftAhead
   , rightAhead
   -- ** Marker
   , Marker
@@ -79,8 +81,8 @@ here = Here
 ahead :: SenseDir
 ahead = Ahead
 
-leftAhed :: SenseDir
-leftAhed = LeftAhead
+leftAhead :: SenseDir
+leftAhead = LeftAhead
 
 rightAhead :: SenseDir
 rightAhead = RightAhead
