@@ -13,10 +13,10 @@ import           Ant.Optimization
 
 main :: IO ()
 main = hspec $ do
-  heavyprop 1000 "any possible generated program is well formed"
+  propWith 1000 "any possible generated program is well formed"
     testMonad
 
-  heavyprop 1000 "any possible optimization preserves validity"
+  propWith 1000 "any possible optimization preserves validity"
     testOptimization
 
 -- | Test a optimization
@@ -36,5 +36,5 @@ testMonad = valid . compileProg . toAntM
 
 -- | A `heavier` version of prop where the number of runs
 -- can be specified.
-heavyprop :: Testable prop => Int -> String -> prop -> Spec
-heavyprop n str = modifyMaxSuccess (const n) . prop str
+propWith :: Testable prop => Int -> String -> prop -> Spec
+propWith n str = modifyMaxSuccess (const n) . prop str
