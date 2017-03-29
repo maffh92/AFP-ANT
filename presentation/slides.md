@@ -1,7 +1,10 @@
 ---
-author: Author name here
-title: Concepts of programming languages
-subtitle: My title here
+author: Martijn Fleuren
+        Marinus Oosters
+        Carlos Tomé Cortiñas
+        Matthew Swart
+title: Ants
+subtitle: Amazing ants!
 theme: uucs
 mainfont: Ubuntu Light
 sansfont: Ubuntu Light
@@ -28,39 +31,17 @@ My contents
 
 ---
 
-# Titles
+# Overview
 
-You can use the hash symbol \# to make the title of a slide.
-
-## Subtitle
-
-You can use more than one hash symbol \#\# to have subtitles on your
-slide.
-
----
-
-* Bullet lists
+* Architecture
 * are pretty easy
 * too!
 
 ---
 
-# Emphasis
+# Architecture
 
-You can include a word in asterisks to add *emphasis* or two asterisks
-to make it **bold**.
-
-That is:
-
-```
-*emphasis* vs **bold**
-```
-
----
-
-# Images
-
-Please include any images in the `img` subdirectory.
+slease include any images in the `img` subdirectory.
 
 You can refer to images using the usual markdown syntax:
 
@@ -68,39 +49,19 @@ You can refer to images using the usual markdown syntax:
 
 ---
 
-# Staged builds
-
-This is quite easy
-
-. . .
-
-Just insert `. . .` on a new line when you want the slide to appear
-incrementally.
-
----
-
-# Code
-
-You can use backticks to include inline code such as `x` or `y`.
-
-Use three backticks to introduce a code block:
-
-```
-main = print "Hello world!"
-```
-
----
-
-# Syntax highlighting
-
-There are syntax highlighting options for the most widely used
-languages.
+# DSL
 
 ```haskell
-foo y = let x = 4 in x + z
-  where
-  z = 12
+newtype AntT m l a = AntT { runAnt :: TardisT (Program l) l m a
 ```
+
+---
+
+# How does it works?
+
+---
+
+# Abstractions over AntT
 
 ---
 

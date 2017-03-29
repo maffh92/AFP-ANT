@@ -32,6 +32,7 @@ module Ant
   , right
   -- ** Code generation
   , compile
+  , compileProg
   ) where
 
 import           Ant.Base as B
@@ -41,7 +42,10 @@ import           Control.Lens
 import           Data.Map     (toList)
 
 compile :: AntM L () -> String
-compile = showCmds . toList . view commands . fst . snd . runAntM z
+compile = showCmds . toList . view commands . compileProg
+
+compileProg :: AntM L () -> Program L
+compileProg = fst . snd . runAntM z
 
 friend :: Condition
 friend = Friend

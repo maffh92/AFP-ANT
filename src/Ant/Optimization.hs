@@ -1,5 +1,6 @@
 module Ant.Optimization
   ( Optimization
+  , Opt
   , applyOpt
   , duplicateCodeOpt
   , unreachableOpt

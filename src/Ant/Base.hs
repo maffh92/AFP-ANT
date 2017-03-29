@@ -1,20 +1,23 @@
 {-# LANGUAGE DeriveFoldable    #-}
 {-# LANGUAGE DeriveFunctor     #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE DeriveTraversable #-}
 module Ant.Base where
+
+import           GHC.Generics
 
 {- describes the output state machine -}
 data TurnDir
   = Left
   | Right
-  deriving (Show, Ord, Eq)
+  deriving (Show, Ord, Eq, Generic)
 
 data SenseDir
   = Here
   | Ahead
   | LeftAhead
   | RightAhead
-  deriving (Show, Ord, Eq)
+  deriving (Show, Ord, Eq, Generic)
 
 data Marker
   = Zero
@@ -23,7 +26,7 @@ data Marker
   | Three
   | Four
   | Five
-  deriving (Eq)
+  deriving (Eq, Generic)
 
 instance Enum Marker where
   fromEnum x = case x of
@@ -49,7 +52,7 @@ data Condition
   | FoeMarker
   | Home
   | FoeHome
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Generic)
 
 instance Show Condition where
   show Friend         = "Friend"
@@ -63,8 +66,6 @@ instance Show Condition where
   show Home           = "Home"
   show FoeHome        = "FoeHome"
 
-type State = Int
-
 data Command a
   = Sense SenseDir a a Condition
   | Mark Marker a
@@ -74,7 +75,7 @@ data Command a
   | Turn TurnDir a
   | Move a a
   | Flip Int a a
-  deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
+  deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic)
 
 showCmds :: Show a => [(a, Command a)] -> String
 showCmds = unlines . map showInstr

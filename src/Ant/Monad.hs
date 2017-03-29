@@ -43,10 +43,10 @@ import           Control.Monad.Fix
 import           Control.Monad.Tardis.Class
 import           Control.Monad.Trans.Tardis (TardisT, runTardisT)
 import           Data.Foldable
-import           Data.List                  ((\\))
 import           Data.Map                   (Map)
-import qualified Data.Map                   as M (empty, insert, keys, lookup)
+import qualified Data.Map                   as M (empty, insert, lookup, keysSet)
 import           Data.Maybe                 (isJust)
+import qualified Data.Set as S (fromList, (\\))
 
 --------------------------------------------------------------------------------
 -- Progam
@@ -64,7 +64,7 @@ makeLenses ''Program
 valid :: Ord l => Program l -> Bool
 valid prog =
   let m = prog ^. commands
-   in null (M.keys m \\ foldMap toList m) &&
+   in null (S.fromList (foldMap toList m) S.\\ M.keysSet m) &&
       isJust (M.lookup (prog ^. entry) m)
 
 --------------------------------------------------------------------------------
