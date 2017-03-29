@@ -2,7 +2,6 @@
 
 import           Test.Hspec
 import           Test.Hspec.QuickCheck
-import           Test.QuickCheck
 
 import           Spec.Base
 import           Spec.Optimization
@@ -15,8 +14,16 @@ testOptimization opt antm =
   valid $ applyOpt (toOptimization opt)
                    (compileProg (toAntM antm))
 
+
+testMonad :: AntMTest -> Bool
+testMonad = valid . compileProg . toAntM
+
 main :: IO ()
-main = hspec $
-  prop "any possible optimization preserves validity" testOptimization
+main = hspec $ do
+  prop "any possible generated program is well formed"
+    testMonad
+
+  prop "any possible optimization preserves validity"
+    testOptimization
 
 
