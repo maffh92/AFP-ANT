@@ -2,6 +2,7 @@
 
 import           Test.Hspec
 import           Test.Hspec.QuickCheck
+import           Test.QuickCheck.Property
 
 import           Spec.Base
 import           Spec.Optimization
@@ -9,21 +10,31 @@ import           Spec.Optimization
 import           Ant
 import           Ant.Optimization
 
+
+main :: IO ()
+main = hspec $ do
+  heavyprop 1000 "any possible generated program is well formed"
+    testMonad
+
+  heavyprop 1000 "any possible optimization preserves validity"
+    testOptimization
+
+-- | Test a optimization
 testOptimization :: Op -> AntMTest -> Bool
 testOptimization opt antm =
   valid $ applyOpt (toOptimization opt)
                    (compileProg (toAntM antm))
 
 
+-- | Test validity of programs
 testMonad :: AntMTest -> Bool
 testMonad = valid . compileProg . toAntM
 
-main :: IO ()
-main = hspec $ do
-  prop "any possible generated program is well formed"
-    testMonad
 
-  prop "any possible optimization preserves validity"
-    testOptimization
+--------------------------------------------------------------------------------
+  -- Utils
 
-
+-- | A `heavier` version of prop where the number of runs
+-- can be specified.
+heavyprop :: Testable prop => Int -> String -> prop -> Spec
+heavyprop n str = modifyMaxSuccess (const n) . prop str
