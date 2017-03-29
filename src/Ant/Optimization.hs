@@ -1,5 +1,6 @@
 module Ant.Optimization
   ( Optimization
+  , applyOpt
   , duplicateCodeOpt
   , unreachableOpt
   ) where
@@ -13,19 +14,30 @@ import           Data.List     (uncons, (\\))
 import qualified Data.Map      as M
 import           Data.Maybe    (maybeToList)
 import qualified Data.Set      as S
+import qualified Control.Category as C
 
 --------------------------------------------------------------------------------
   -- Optimization
 
 -- | An optimization is a transformation Program to Program
-type Optimization l = Program l -> Program l
+newtype Opt l1 l2 = Opt { unOpt :: Program l1 -> Program l2 }
 
+type Optimization l = Opt l l
+
+-- This class give us composition of optimizations
+instance C.Category Opt where
+  id                = Opt id
+  (Opt f) . (Opt g) = Opt (f . g)
+
+-- | Apply an Optimization to a given program
+applyOpt :: Optimization l -> Program l -> Program l
+applyOpt = unOpt
 
 --------------------------------------------------------------------------------
   -- Unreachable code optimization
 
 unreachableOpt :: Ord l => Optimization l
-unreachableOpt prog =
+unreachableOpt = Opt $ \prog ->
   prog & commands %~ flip (foldl (flip M.delete))
                           (unreachable prog)
 
@@ -48,7 +60,7 @@ unreachable prog = M.keys (prog ^. commands) \\ reachable prog
   -- Duplicate code optimization
 
 duplicateCodeOpt :: Ord l => Optimization l
-duplicateCodeOpt prog =
+duplicateCodeOpt = Opt $ \prog ->
   let (dups, upd) = duplicated prog
    in prog & entry    %~ upd
            & commands %~ (M.map (fmap upd)

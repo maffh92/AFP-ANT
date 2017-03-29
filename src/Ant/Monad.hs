@@ -30,19 +30,23 @@ module Ant.Monad
   , Program
   , commands
   , entry
+  , valid
   -- * Labels
   , Label(..)
   , L
   )where
 
-import           Ant.Base                   as A
+import           Ant.Base
 
 import           Control.Lens               hiding (at)
 import           Control.Monad.Fix
 import           Control.Monad.Tardis.Class
 import           Control.Monad.Trans.Tardis (TardisT, runTardisT)
+import           Data.Foldable
+import           Data.List                  ((\\))
 import           Data.Map                   (Map)
-import qualified Data.Map                   as M
+import qualified Data.Map                   as M (empty, insert, keys, lookup)
+import           Data.Maybe                 (isJust)
 
 --------------------------------------------------------------------------------
 -- Progam
@@ -54,6 +58,14 @@ data Program l =
           deriving (Eq, Show)
 
 makeLenses ''Program
+
+-- | A program is valid iff all labels contained in the commands
+-- are keys of the Map.
+valid :: Ord l => Program l -> Bool
+valid prog =
+  let m = prog ^. commands
+   in null (M.keys m \\ foldMap toList m) &&
+      isJust (M.lookup (prog ^. entry) m)
 
 --------------------------------------------------------------------------------
 -- Label
