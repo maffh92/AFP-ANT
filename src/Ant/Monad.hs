@@ -29,6 +29,7 @@ module Ant.Monad
   -- * Program
   , Program
   , commands
+  , entry
   -- * Labels
   , Label(..)
   , L

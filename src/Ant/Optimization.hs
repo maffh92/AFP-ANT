@@ -1,9 +1,5 @@
-{-# LANGUAGE DeriveFoldable      #-}
-{-# LANGUAGE DeriveFunctor       #-}
-{-# LANGUAGE DeriveTraversable   #-}
 {-# LANGUAGE RecursiveDo         #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
 module Ant.Optimization where
 
 import           Ant.Base
@@ -11,12 +7,13 @@ import           Ant.Monad
 import           Data.List
 import           Data.Maybe
 
-import           Control.Lens
+import           Control.Lens hiding (uncons)
 import           Data.Foldable
 import           Data.Map      (Map)
 import qualified Data.Map as M
 import           Data.Set (Set)
 import qualified Data.Set as S
+import Control.Monad 
 
 type Command' = Command Int
 --Delete duplicates
@@ -102,14 +99,26 @@ unreachableOpt :: Ord l => Program l -> Program l
 unreachableOpt prog =
   prog & commands %~ flip (foldl (flip M.delete))
                           (unreachable prog)
-test3 :: Program L
-test3 = fst . snd . runAntM z $ mdo
-  init <- label
-  drop'
-  goto finish
-  drop'
-  drop'
-  finish <- label
-  goto init
-  drop'
-  goto init
+
+--------------------------------------------------------------------------------
+  -- Duplicate code optimization
+
+partial :: (a -> Bool) -> a -> Maybe a
+partial p x = if p x then Just x else Nothing
+
+duplicateCodeOpt :: Ord l => Program l -> Program l
+duplicateCodeOpt prog =
+  let (dups, upd) = duplicated prog
+   in prog & entry    %~ upd
+           & commands %~ (M.map (fmap upd)
+                         . flip (foldl (flip M.delete)) dups)
+
+-- | All labels that are duplicated plus a function to update
+-- the labels
+duplicated :: Ord l => Program l -> ([l], l -> l)
+duplicated =
+  M.foldl (\(ls,acc) (l,xs)
+          -> (xs ++ ls, acc . (\x -> if x `elem` xs then l else x))) ([],id)
+  . M.mapMaybe (uncons >=> partial (not . null . snd))
+  . M.foldlWithKey (\m k c -> M.insertWith (++) c [k] m) M.empty
+  . view commands

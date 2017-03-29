@@ -5,20 +5,16 @@ module Ant.Base where
 
 {- describes the output state machine -}
 data TurnDir
-  = DLeft
-  | DRight
-  deriving Eq
-
-instance Show TurnDir where
-  show DLeft  = "Left"
-  show DRight = "Right"
+  = Left
+  | Right
+  deriving (Show, Ord, Eq)
 
 data SenseDir
   = Here
   | Ahead
   | LeftAhead
   | RightAhead
-  deriving (Show, Eq)
+  deriving (Show, Ord, Eq)
 
 data Marker
   = Zero
@@ -27,7 +23,7 @@ data Marker
   | Three
   | Four
   | Five
-  deriving Eq
+  deriving (Eq)
 
 instance Enum Marker where
   fromEnum x = case x of
@@ -53,7 +49,7 @@ data Condition
   | FoeMarker
   | Home
   | FoeHome
-  deriving Eq
+  deriving (Eq, Ord)
 
 instance Show Condition where
   show Friend         = "Friend"
@@ -78,7 +74,7 @@ data Command a
   | Turn TurnDir a
   | Move a a
   | Flip Int a a
-  deriving (Show, Eq, Functor, Foldable, Traversable)
+  deriving (Show, Eq, Ord, Functor, Foldable, Traversable)
 
 showCmds :: Show a => [(a, Command a)] -> String
 showCmds = unlines . map showInstr

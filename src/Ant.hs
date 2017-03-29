@@ -9,8 +9,6 @@ module Ant
   , food
   , rock
   , marker
-  , mark
-  , unmark
   , foeMarker
   , home
   , foeHome
@@ -36,7 +34,7 @@ module Ant
   , compile
   ) where
 
-import           Ant.Base
+import           Ant.Base as B
 import           Ant.Monad
 
 import           Control.Lens
@@ -106,7 +104,7 @@ five :: Marker
 five = Five
 
 left :: TurnDir
-left = DLeft
+left = B.Left
 
 right :: TurnDir
-right = DRight
+right = B.Right
