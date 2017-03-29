@@ -8,28 +8,32 @@ import Control.Monad.Fix
 
 
 -- markFood,homeMarker :: Marker
-markFood :: MonadFix m => AntT m L ()
+markFood :: (MonadFix m, Label l) => AntT m l ()
 markFood = mark zero
-unmarkFood :: MonadFix m => AntT m L ()
+unmarkFood :: (MonadFix m, Label l) => AntT m l ()
 unmarkFood = unmark zero
 
+foodMarker :: Condition
 foodMarker = marker zero
 
-markHome :: MonadFix m => AntT m L ()
+markHome :: (MonadFix m, Label l) => AntT m l ()
 markHome = mark one
+
+homeMarker :: Condition
 homeMarker = marker one
-unmarkHome :: MonadFix m => AntT m L ()
+
+unmarkHome :: (MonadFix m, Label l) => AntT m l ()
 unmarkHome = unmark one
 
 
 
 searchFood ::
-    MonadFix m =>  
-    AntT m L ()
-searchFood = 
+    (MonadFix m, Label l) =>
+    AntT m l ()
+searchFood =
   mdo
   searchFood' <- label
-  senseFood 
+  senseFood
     (sense here home
       (randomMove (goto searchFood') searchFood')
       (sense ahead home
@@ -43,7 +47,7 @@ searchFood =
     )
     (
       sensemarkFood (foodtrail searchFood'  $ returnFood searchFood')
-        $ senseRock 
+        $ senseRock
           (
             mdo
             markHome
@@ -54,12 +58,12 @@ searchFood =
 
 
 senseFood ::
-    MonadFix m => 
-    AntT m L () -> 
-    AntT m L () ->
-    L ->
-    AntT m L ()
-senseFood foodFound nothing searchFood' = 
+    (MonadFix m, Label l) =>
+    AntT m l () ->
+    AntT m l () ->
+    l ->
+    AntT m l ()
+senseFood foodFound nothing searchFood' =
   sense here food foodFound
   $ sense ahead food
     (
@@ -82,15 +86,15 @@ senseFood foodFound nothing searchFood' =
             goto searchFood'
           )
           nothing
-        
+
     )
 
 sensemarkFood ::
-    MonadFix m => 
-    AntT m L () -> 
-    AntT m L () ->
-    AntT m L ()
-sensemarkFood foodTrail' nothing = 
+    (MonadFix m, Label l) =>
+    AntT m l () ->
+    AntT m l () ->
+    AntT m l ()
+sensemarkFood foodTrail' nothing =
   sense ahead foodMarker foodTrail'
     $ sense rightAhead foodMarker
       (
@@ -107,10 +111,10 @@ sensemarkFood foodTrail' nothing =
         nothing
 
 senseRock ::
-    MonadFix m => 
-    AntT m L () -> 
-    AntT m L ()
-senseRock nothing = 
+    (MonadFix m, Label l) =>
+    AntT m l () ->
+    AntT m l ()
+senseRock nothing =
   sense ahead rock
   (
     sense rightAhead rock
@@ -131,12 +135,12 @@ senseRock nothing =
   nothing
 
 senseForHome ::
-    MonadFix m => 
-    L -> 
-    L ->
-    L -> 
-    AntT m L ()
-senseForHome next nothing sf = 
+    (MonadFix m, Label l) =>
+    l ->
+    l ->
+    l ->
+    AntT m l ()
+senseForHome next nothing sf =
     sense here home (dropFood sf)
     $ sense ahead home (goto next)
       $ sense rightAhead home
@@ -155,11 +159,11 @@ senseForHome next nothing sf =
 
 
 senseHomeMarker ::
-    MonadFix m => 
-    L -> 
-    L -> 
-    AntT m L ()
-senseHomeMarker next returnFood' = 
+    (MonadFix m, Label l) =>
+    l ->
+    l ->
+    AntT m l ()
+senseHomeMarker next returnFood' =
   sense here homeMarker
     (
       mdo
@@ -174,7 +178,7 @@ senseHomeMarker next returnFood' =
           ( mdo
             turn right
             goto next
-          ) 
+          )
           (
             sense leftAhead homeMarker
             (
@@ -185,18 +189,18 @@ senseHomeMarker next returnFood' =
             $ randomMove (goto returnFood') returnFood'
           )
 
-        ) 
+        )
 
 
     )
 
 senseFoodAndFriend ::
-    MonadFix m => 
-    AntT m L () -> 
-    AntT m L () -> 
-    AntT m L () -> 
-    AntT m L ()
-senseFoodAndFriend both food' nothing = 
+    (MonadFix m, Label l) =>
+    AntT m l () ->
+    AntT m l () ->
+    AntT m l () ->
+    AntT m l ()
+senseFoodAndFriend both food' nothing =
   sense ahead food
     (sense ahead friend both food')
     (
@@ -213,17 +217,17 @@ senseFoodAndFriend both food' nothing =
               turn right
               food'
           )
-          nothing  
+          nothing
         )
     )
 
 senseFoodTrailAndFriend ::
-    MonadFix m => 
-    AntT m L () -> 
-    AntT m L () ->
-    AntT m L () ->
-    AntT m L ()
-senseFoodTrailAndFriend both marker' nothing = 
+    (MonadFix m, Label l) =>
+    AntT m l () ->
+    AntT m l () ->
+    AntT m l () ->
+    AntT m l ()
+senseFoodTrailAndFriend both marker' nothing =
   sense ahead food
     (sense ahead friend both marker')
     (
@@ -241,15 +245,15 @@ senseFoodTrailAndFriend both marker' nothing =
               marker'
           )
           nothing
-        
+
 
     )
 
 senseHome ::
-    MonadFix m => 
-    AntT m L () -> 
-    AntT m L () -> 
-    AntT m L ()
+    (MonadFix m, Label l) =>
+    AntT m l () ->
+    AntT m l () ->
+    AntT m l ()
 senseHome home' nothing =
   sense ahead home home' $
         sense leftAhead home
@@ -268,24 +272,24 @@ senseHome home' nothing =
               nothing
           )
 
-nonBlockingMove :: 
-    MonadFix m => 
-    AntT m L () -> 
-    AntT m L () -> 
-    AntT m L ()
-nonBlockingMove next notpossible = 
+nonBlockingMove ::
+    (MonadFix m, Label l) =>
+    AntT m l () ->
+    AntT m l () ->
+    AntT m l ()
+nonBlockingMove next notpossible =
     senseNoFriend next (senseNoRock next notpossible)
 
-senseNoRock,senseNoFriend :: 
-  MonadFix m => 
-  AntT m L () -> 
-  AntT m L () -> 
-  AntT m L ()
-senseNoRock = senseNo rock 
-senseNoFriend = senseNo friend 
+senseNoRock,senseNoFriend ::
+  (MonadFix m, Label l) =>
+  AntT m l () ->
+  AntT m l () ->
+  AntT m l ()
+senseNoRock = senseNo rock
+senseNoFriend = senseNo friend
 
 
-senseNo :: MonadFix m => Condition -> AntT m L () ->  AntT m L () -> AntT m L ()
+senseNo :: (MonadFix m, Label l) => Condition -> AntT m l () ->  AntT m l () -> AntT m l ()
 senseNo condition nothing destination  =
     sense ahead condition
       (
@@ -296,53 +300,53 @@ senseNo condition nothing destination  =
       nothing
 
 
-randomMove :: 
-  MonadFix m => 
-  AntT m L () -> 
-  L -> 
-  AntT m L ()
+randomMove ::
+  (MonadFix m, Label l) =>
+  AntT m l () ->
+  l ->
+  AntT m l ()
 randomMove _next _blocked =
-    flip' 3 
+    flip' 3
     (
         mdo
         turn left
         move _next (goto _blocked)
     )
-    (flip' 2 
+    (flip' 2
       (
-        mdo 
+        mdo
         turn right
         move (goto _blocked) _next
       )
       (move (goto _blocked) _next))
 
 turnAround ::
-    MonadFix m => 
-    AntT m L () -> 
-    AntT m L ()
+    (MonadFix m, Label l) =>
+    AntT m l () ->
+    AntT m l ()
 turnAround next = mdo
   turn left
   turn left
   next
 
-dropFood :: MonadFix m => L -> AntT m L ()
+dropFood :: (MonadFix m, Label l) => l -> AntT m l ()
 dropFood sf =
   mdo
   drop'
   turnAround $ goto sf
 
-returnFood :: MonadFix m =>  L -> AntT m L ()
+returnFood :: (MonadFix m, Label l) =>  l -> AntT m l ()
 returnFood searchFood' = mdo
   returnFood' <- label
-  randomMove 
+  randomMove
     (move (goto returnFood') (goto returnFood'))
     searchFood'
 
-foodtrail :: MonadFix m => L ->  AntT m L () ->  AntT m L ()
+foodtrail :: (MonadFix m, Label l) => l ->  AntT m l () ->  AntT m l ()
 foodtrail sf returnFood' = mdo
  ft <- label
- senseFoodAndFriend 
-  (nonBlockingMove 
+ senseFoodAndFriend
+  (nonBlockingMove
     (move (goto sf) (goto sf))
     (randomMove (goto ft) ft))
   (senseHome
@@ -368,7 +372,7 @@ foodtrail sf returnFood' = mdo
       (randomMove (goto sf) sf)
   )
 
-clearFoodTrail :: MonadFix m => L -> AntT m L ()
+clearFoodTrail :: (MonadFix m, Label l) => l -> AntT m l ()
 clearFoodTrail sf = mdo
   clearFoodTrail' <- label
   sense ahead friend

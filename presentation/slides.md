@@ -35,7 +35,8 @@ My contents
 
 * Architecture
 * are pretty easy
-* too!
+* Optimizations
+* Testing
 
 ---
 

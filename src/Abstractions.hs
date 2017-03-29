@@ -64,7 +64,7 @@ cont c = mdo
 
 -- | Do nothing.nt
 nop :: (Label l, MonadFix m) => AntT m l ()
-nop = cont (flip'_ 1 . goto)
+nop = cont (flip_ 1 . goto)
 
 -- | Do nothing for @n@ times.
 nops :: (MonadFix m, Label l)  => Int -> AntT m l ()

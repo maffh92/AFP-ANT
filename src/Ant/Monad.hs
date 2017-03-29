@@ -23,7 +23,7 @@ module Ant.Monad
   , pickup
   -- ** Continuous version of Branching commands.
   , move_
-  , flip'_
+  , flip_
   , sense_
   , pickup_
   -- * Program
@@ -31,10 +31,11 @@ module Ant.Monad
   , commands
   , entry
   , valid
+  , size
   -- * Labels
   , Label(..)
   , L
-  )where
+  ) where
 
 import           Ant.Base
 
@@ -44,9 +45,10 @@ import           Control.Monad.Tardis.Class
 import           Control.Monad.Trans.Tardis (TardisT, runTardisT)
 import           Data.Foldable
 import           Data.Map                   (Map)
-import qualified Data.Map                   as M (empty, insert, lookup, keysSet)
+import qualified Data.Map                   as M (empty, insert, keys, keysSet,
+                                                  lookup)
 import           Data.Maybe                 (isJust)
-import qualified Data.Set as S (fromList, (\\))
+import qualified Data.Set                   as S (fromList, (\\))
 
 --------------------------------------------------------------------------------
 -- Progam
@@ -66,6 +68,10 @@ valid prog =
   let m = prog ^. commands
    in null (S.fromList (foldMap toList m) S.\\ M.keysSet m) &&
       isJust (M.lookup (prog ^. entry) m)
+
+-- | The size of a program is the number of states
+size :: Ord l => Program l -> Int
+size  = length . M.keys . view commands
 
 --------------------------------------------------------------------------------
 -- Label
@@ -197,7 +203,7 @@ sense :: (MonadFix m, Label l)
      -> AntT m l () -- ^ Success
      -> AntT m l () -- ^ Failure
      -> AntT m l ()
-sense c s = branchingCmd (\su fa -> Sense c su fa s)
+sense c s' = branchingCmd (\su fa -> Sense c su fa s')
 
 flip' :: (MonadFix m, Label l)
      => Int
@@ -208,25 +214,26 @@ flip' n = branchingCmd (Flip n)
 
 --------------------------------------------------------------------------------
 -- Branching commands that only branch in one argument.
+-- Only branch in case of failure.
 
 move_ :: (MonadFix m, Label l)
-      => AntT m l ()
+      => AntT m l () -- ^ Failure
       -> AntT m l ()
 move_ = noBranchingCmd Move
 pickup_ :: (MonadFix m, Label l)
-       => AntT m l ()
-       -> AntT m l ()
+        => AntT m l () -- ^ Failure
+        -> AntT m l ()
 pickup_ = noBranchingCmd PickUp
 
 sense_ :: (MonadFix m, Label l)
-     => SenseDir
-     -> Condition
-     -> AntT m l ()
-     -> AntT m l ()
-sense_ c s = noBranchingCmd (\su fa -> Sense c su fa s)
+       => SenseDir
+       -> Condition
+       -> AntT m l () -- ^ Failure
+       -> AntT m l ()
+sense_ c s' = noBranchingCmd (\su fa -> Sense c su fa s')
 
-flip'_ :: (MonadFix m, Label l)
+flip_ :: (MonadFix m, Label l)
       => Int
+      -> AntT m l () -- ^ Failure
       -> AntT m l ()
-      -> AntT m l ()
-flip'_ n = noBranchingCmd (Flip n)
+flip_ n = noBranchingCmd (Flip n)
