@@ -57,6 +57,7 @@ import qualified Data.Set                   as S (fromList, (\\))
 class Ord l => Label l where
   z :: l
   s :: l -> l
+  toInt :: l -> Int
  
 
 -- | Cannonical implementation of Label.
@@ -66,8 +67,9 @@ newtype L = L { _lab :: Int }
 makeLenses ''L
 
 instance Label L where
-  z = L 0
-  s = lab %~ (+1)
+  z     = L 0
+  s     = lab %~ (+1)
+  toInt = view lab  
 
 instance Show L where
   show = show . view lab
@@ -91,7 +93,8 @@ valid :: (Ord l, Label l) => Program l -> Bool
 valid prog =
   let m = prog ^. commands
    in null (S.fromList (foldMap toList m) S.\\ M.keysSet m) &&
-      isJust (M.lookup (prog ^. entry) m) 
+      isJust (M.lookup (prog ^. entry) m) &&
+      (size prog == (succ $ maximum $ map toInt $ M.keys m))
 
 -- | The size of a program is the number of states
 size :: Ord l => Program l -> Int
