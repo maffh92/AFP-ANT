@@ -8,13 +8,13 @@ import           GHC.Generics
 
 {- describes the output state machine -}
 data LeftOrRight
-  = Left
-  | Right
+  = IsLeft
+  | IsRight
   deriving (Ord, Eq, Generic)
 
 instance Show LeftOrRight where
-  show Ant.Base.Left  = "LEFT"
-  show Ant.Base.Right = "RIGHT"
+  show Ant.Base.IsLeft  = "LEFT"
+  show Ant.Base.IsRight = "RIGHT"
 
 data SenseDir
   = Here
