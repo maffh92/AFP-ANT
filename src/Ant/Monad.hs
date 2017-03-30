@@ -34,7 +34,7 @@ module Ant.Monad
   , size
   -- * Labels
   , Label(..)
-  , L
+  , L(..)
   ) where
 
 import           Ant.Base
@@ -51,35 +51,13 @@ import           Data.Maybe                 (isJust)
 import qualified Data.Set                   as S (fromList, (\\))
 
 --------------------------------------------------------------------------------
--- Progam
-
--- | A Program
-data Program l =
-  Program { _entry     :: l
-          , _commands  :: Map l (Command l) }
-          deriving (Eq, Show)
-
-makeLenses ''Program
-
--- | A program is valid iff all labels contained in the commands
--- are keys of the Map.
-valid :: Ord l => Program l -> Bool
-valid prog =
-  let m = prog ^. commands
-   in null (S.fromList (foldMap toList m) S.\\ M.keysSet m) &&
-      isJust (M.lookup (prog ^. entry) m)
-
--- | The size of a program is the number of states
-size :: Ord l => Program l -> Int
-size  = length . M.keys . view commands
-
---------------------------------------------------------------------------------
 -- Label
 
 -- | The class of Labels.
 class Ord l => Label l where
   z :: l
   s :: l -> l
+ 
 
 -- | Cannonical implementation of Label.
 newtype L = L { _lab :: Int }
@@ -93,6 +71,31 @@ instance Label L where
 
 instance Show L where
   show = show . view lab
+
+
+
+--------------------------------------------------------------------------------
+-- Progam
+
+-- | A Program
+data Program l =
+  Program { _entry     :: l
+          , _commands  :: Map l (Command l) }
+          deriving (Eq, Show)
+
+makeLenses ''Program
+
+-- | A program is valid iff all labels contained in the commands
+-- are keys of the Map.
+valid :: (Ord l, Label l) => Program l -> Bool
+valid prog =
+  let m = prog ^. commands
+   in null (S.fromList (foldMap toList m) S.\\ M.keysSet m) &&
+      isJust (M.lookup (prog ^. entry) m) 
+
+-- | The size of a program is the number of states
+size :: Ord l => Program l -> Int
+size  = length . M.keys . view commands
 
 --------------------------------------------------------------------------------
 -- Monad
