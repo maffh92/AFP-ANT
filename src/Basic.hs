@@ -11,7 +11,6 @@ module Basic
   ) where
 
 import Control.Monad.Fix
-import Data.Ratio
 import Ant.Monad
 import Ant.Base
 
@@ -50,9 +49,7 @@ chance k b1 b2
   | k <=   0 = b2 -- Choose branch1 with   0% chance
   | k >= 100 = b1 -- Choose branch1 with 100% chance
   | otherwise =
-    let k' = k % 100
-        d' = round $ (fromIntegral . denominator $ k') /
-          (fromIntegral . numerator $ k')
-    in flip' (d' - 1) b1 b2
+    let  n = round ( 100 / fromIntegral k ) - 1
+    in flip' n b1 b2
 
 
