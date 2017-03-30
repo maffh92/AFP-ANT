@@ -17,11 +17,11 @@ main = hspec $ do
   propWith 1000 "any possible generated program is valid"
     testMonad
 
-  propWith 1000 "any possible optimization preserves validity" $
-    testOptimization UnRC
+  propWith 1000 "any possible optimization preserves validity"
+    testOptimization
 
   propWith 100 "any optimization preserves equivalence" $
-    testOptimizationInSimulation 100 UnRC
+    testOptimizationInSimulation 1000
 
 -- | Test a optimization
 testOptimization :: Op -> AntMTest -> Bool
