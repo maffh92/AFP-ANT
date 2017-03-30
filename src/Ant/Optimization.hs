@@ -103,7 +103,7 @@ duplicated :: (Ord l, Label l) => Program l -> ([l], l -> l)
 duplicated =
   M.foldl (\(ls,acc) (l,xs)
           -> (xs ++ ls, acc . (\x -> if x `elem` xs then l else x))) ([],id)
-  . M.mapMaybe (uncons >=> partial (not . null . snd))
+  . M.mapMaybe (uncons . sort >=> partial (not . null . snd))
   . M.foldlWithKey (\m k c -> M.insertWith (++) c [k] m) M.empty
   . view commands
 

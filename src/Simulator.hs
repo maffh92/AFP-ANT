@@ -116,7 +116,7 @@ data Ant = Ant
    , antResting   :: Int
    , antDirection :: Dir
    , antHasFood   :: Bool
-   }
+   } deriving (Eq)
 
 instance Show Ant where
    show a = concat $ intersperse ", "
@@ -174,7 +174,7 @@ data Cell = Cell
    , anthill      :: Maybe AntColor
    , markersRed   :: Markers
    , markersBlack :: Markers
-   }
+   } deriving Eq
 
 data CellType = Rocky | Clear deriving (Eq, Show)
 
