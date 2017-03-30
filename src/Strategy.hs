@@ -4,6 +4,7 @@
 module Strategy where
 
 import Ant
+import Abstractions
 import Control.Monad.Fix
 
 
@@ -25,8 +26,6 @@ homeMarker = marker one
 unmarkHome :: (MonadFix m, Label l) => AntT m l ()
 unmarkHome = unmark one
 
-
-
 searchFood ::
     (MonadFix m, Label l) =>
     AntT m l ()
@@ -34,16 +33,11 @@ searchFood =
   mdo
   searchFood' <- label
   senseFood
-    (sense here home
-      (randomMove (goto searchFood') searchFood')
-      (sense ahead home
-        (
-          move (randomMove (goto searchFood') searchFood') (move (goto searchFood') (goto searchFood'))
-        )
-        (
-          pickup (turnAround $ goto searchFood') (goto searchFood')
-        )
-      )
+     (if' (here :=: home)
+         (randomMove (goto searchFood') searchFood')
+      $  if' (ahead :=: home)
+             (move (randomMove (goto searchFood') searchFood') (move (goto searchFood') (goto searchFood')))
+           $ pickup (turnAround $ goto searchFood') (goto searchFood')
     )
     (
       sensemarkFood (foodtrail searchFood'  $ returnFood searchFood')
@@ -56,7 +50,6 @@ searchFood =
     )
     searchFood'
 
-
 senseFood ::
     (MonadFix m, Label l) =>
     AntT m l () ->
@@ -64,30 +57,19 @@ senseFood ::
     l ->
     AntT m l ()
 senseFood foodFound nothing searchFood' =
-  sense here food foodFound
-  $ sense ahead food
-    (
-      mdo
-      markHome
-      move foodFound (goto searchFood')
-    )
-    (
-      sense rightAhead food
-        (
-          mdo
-          turn right
-          goto searchFood'
-        )
-        $
-          sense leftAhead food
+  if' (here :=: food) 
+      foodFound
+    $ if' (ahead :=: food)
           (
             mdo
-            turn left
-            goto searchFood'
+            markHome
+            move foodFound (goto searchFood')
           )
-          nothing
-
-    )
+        $ if' (rightAhead :=: food)
+              (turnTo right $ goto searchFood')
+            $ if' (leftAhead :=: food)
+              (turnTo left $ goto searchFood')
+              nothing
 
 sensemarkFood ::
     (MonadFix m, Label l) =>
@@ -95,42 +77,28 @@ sensemarkFood ::
     AntT m l () ->
     AntT m l ()
 sensemarkFood foodTrail' nothing =
-  sense ahead foodMarker foodTrail'
-    $ sense rightAhead foodMarker
-      (
-        mdo
-        turn right
-        foodTrail'
-      )
-      $ sense leftAhead foodMarker
-        (
-          mdo
-          turn left
-          foodTrail'
-        )
-        nothing
+  if' (ahead :=: foodMarker) 
+      foodTrail'
+    $ if' (rightAhead :=: foodMarker)
+          (turnTo right foodTrail')
+        $ if' (leftAhead :=: foodMarker)
+              (turnTo left foodTrail')
+              nothing
 
 senseRock ::
     (MonadFix m, Label l) =>
     AntT m l () ->
     AntT m l ()
 senseRock nothing =
-  sense ahead rock
+  if' (ahead :=: rock)
   (
-    sense rightAhead rock
-      (sense leftAhead rock
+    if' (rightAhead :=: rock)
         (
-          mdo
-          turn right
-          turnAround nothing
+          if' (leftAhead :=: rock)
+          (turnTo right $ turnAround nothing)
+          (turnTo left $ turnAround nothing)
         )
-        $ mdo
-          turn left
-          turnAround nothing
-      )
-      $ mdo
-        turn right
-        turnAround nothing
+      $ turnTo right $ turnAround nothing
   )
   nothing
 
@@ -141,22 +109,15 @@ senseForHome ::
     l ->
     AntT m l ()
 senseForHome next nothing sf =
-    sense here home (dropFood sf)
-    $ sense ahead home (goto next)
-      $ sense rightAhead home
-        (
-          mdo
-          turn right
-          goto next
-        )
-        $ sense leftAhead home
-          (
-            mdo
-            turn left
-            goto next
-          )
-          $ goto nothing
-
+    if' (here :=: home) 
+        (dropFood sf)
+     $ if' (ahead :=: home) 
+           (goto next)
+         $ if' (rightAhead :=: home)
+               (turnTo left $ goto next)
+             $ if' (leftAhead :=: home)
+                   (turnTo left $ goto next)
+                  $ goto nothing
 
 senseHomeMarker ::
     (MonadFix m, Label l) =>
@@ -164,35 +125,20 @@ senseHomeMarker ::
     l ->
     AntT m l ()
 senseHomeMarker next returnFood' =
-  sense here homeMarker
-    (
-      mdo
-      unmarkHome
-      markFood
-      goto returnFood'
-    )
-    (
-      sense ahead homeMarker (goto next)
-        (
-          sense rightAhead homeMarker
-          ( mdo
-            turn right
-            goto next
-          )
-          (
-            sense leftAhead homeMarker
-            (
-              mdo
-              turn left
-              goto next
-            )
-            $ randomMove (goto returnFood') returnFood'
-          )
-
-        )
-
-
-    )
+  if' (here :=: homeMarker)
+      (
+        mdo
+        unmarkHome
+        markFood
+        goto returnFood'
+      )
+    $ if' (ahead :=: homeMarker) 
+          (goto next)
+          $ if' (rightAhead :=: homeMarker)
+                (turnTo right (goto next))
+             $  if' (leftAhead :=: homeMarker)
+                (turnTo left (goto next))
+              $ randomMove (goto returnFood') returnFood'
 
 senseFoodAndFriend ::
     (MonadFix m, Label l) =>
@@ -200,54 +146,43 @@ senseFoodAndFriend ::
     AntT m l () ->
     AntT m l () ->
     AntT m l ()
-senseFoodAndFriend both food' nothing =
-  sense ahead food
-    (sense ahead friend both food')
-    (
-      sense leftAhead food
-        (
-          sense leftAhead friend both
-          $ mdo
-            turn left
-            food'
-        )
-        (sense rightAhead food
-          (sense rightAhead friend both
-            $ mdo
-              turn right
-              food'
+senseFoodAndFriend both food' nothing = 
+  if' (ahead :=: food)
+      (if' (ahead :=: friend) both food')
+    $ if' (leftAhead :=: food)
+          (
+            if' (leftAhead :=: friend) 
+                both
+              $ turnTo left food'
           )
-          nothing
-        )
-    )
+        $ if' (rightAhead :=: food)
+              (
+                if' (rightAhead :=: friend)
+                   both
+                 $ turnTo right food'
+              )
+              nothing
 
 senseFoodTrailAndFriend ::
     (MonadFix m, Label l) =>
     AntT m l () ->
     AntT m l () ->
     AntT m l () ->
-    AntT m l ()
+    AntT m l () 
 senseFoodTrailAndFriend both marker' nothing =
-  sense ahead food
-    (sense ahead friend both marker')
-    (
-      sense leftAhead foodMarker
-        ( sense leftAhead friend both $
-          mdo
-          turn left
-          marker'
-        ) $
-        sense rightAhead foodMarker
-          (
-            sense rightAhead friend both
-            $ mdo
-              turn right
-              marker'
-          )
-          nothing
-
-
-    )
+  if' (ahead :=: food)
+      (if' (ahead :=: friend)  both marker')
+      $ if' (leftAhead :=: foodMarker)
+            (if' (leftAhead :=: friend) 
+                  both 
+                  (turnTo left marker'))
+            $ if' (rightAhead :=: foodMarker)
+                (
+                  if' (rightAhead :=: friend)
+                     both
+                     (turnTo right marker')
+                )
+                nothing
 
 senseHome ::
     (MonadFix m, Label l) =>
@@ -255,23 +190,23 @@ senseHome ::
     AntT m l () ->
     AntT m l ()
 senseHome home' nothing =
-  sense ahead home home' $
-        sense leftAhead home
-          (
-            mdo
-            turn left
-            home'
-          )
-          (
-            sense rightAhead home
-              (
-                mdo
-                turn right
-                home'
-              )
-              nothing
-          )
+  if' (ahead :=: home) 
+          home' 
+          $ if' (leftAhead :=: home)
+              (turnTo left home')
+              $ if' (rightAhead :=: home)
+                (turnTo right home')
+                nothing
 
+turnTo :: 
+    (MonadFix m, Label l) => 
+    TurnDir -> 
+    AntT m l () -> 
+    AntT m l ()
+turnTo dir destination = mdo
+                         turn dir
+                         destination 
+    
 nonBlockingMove ::
     (MonadFix m, Label l) =>
     AntT m l () ->
@@ -290,15 +225,14 @@ senseNoFriend = senseNo friend
 
 
 senseNo :: (MonadFix m, Label l) => Condition -> AntT m l () ->  AntT m l () -> AntT m l ()
-senseNo condition nothing destination  =
-    sense ahead condition
-      (
-        sense leftAhead condition
-          (sense rightAhead condition destination nothing)
-          nothing
+senseNo condition nothing destination = 
+  if' (
+          ahead     :=: condition 
+      :|: leftAhead :=: condition
+      :|: rightAhead :=: condition
       )
-      nothing
-
+  destination
+  nothing
 
 randomMove ::
   (MonadFix m, Label l) =>
@@ -375,29 +309,26 @@ foodtrail sf returnFood' = mdo
 clearFoodTrail :: (MonadFix m, Label l) => l -> AntT m l ()
 clearFoodTrail sf = mdo
   clearFoodTrail' <- label
-  sense ahead friend
-    (randomMove (goto sf) sf)
-    ( sense ahead foodMarker
-        (
-          sense leftAhead foodMarker (goto sf)
-            $ mdo
-              unmarkFood
-              move (goto clearFoodTrail') (goto clearFoodTrail')
-        )
-        (
-          sense leftAhead foodMarker
+  if' (ahead :=: friend)
+      (randomMove (goto sf) sf)
+      $ if' (ahead :=: foodMarker)
             (
-              sense rightAhead foodMarker (goto sf)
-              $ mdo
-                unmarkFood
-                turn right
-                move (goto clearFoodTrail') (goto clearFoodTrail')
+              if' (leftAhead :=: foodMarker) (goto sf)
+                $ mdo
+                  unmarkFood
+                  move (goto clearFoodTrail') (goto clearFoodTrail')
             )
-            (
-              mdo
+          $ if' (leftAhead :=: foodMarker)
+                (
+                  if' (rightAhead :=: foodMarker) 
+                      (goto sf)
+                    $ mdo
+                      unmarkFood
+                      turn right
+                      move (goto clearFoodTrail') (goto clearFoodTrail')
+                )
+            $ mdo
               unmarkFood
               turn left
               move (goto clearFoodTrail') (goto clearFoodTrail')
-            )
-        )
-    )
+      
