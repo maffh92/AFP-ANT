@@ -18,6 +18,8 @@ module Ant
   , ahead
   , leftAhead
   , rightAhead
+  -- , while
+  -- , if'
   -- ** Marker
   , Marker
   , zero
