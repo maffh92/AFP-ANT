@@ -8,20 +8,26 @@ import           GHC.Generics
 
 {- describes the output state machine -}
 data LeftOrRight
-  = IsLeft
-  | IsRight
+  = Left
+  | Right
   deriving (Ord, Eq, Generic)
 
 instance Show LeftOrRight where
-  show IsLeft  = "Left"
-  show IsRight = "Right"
+  show Ant.Base.Left  = "LEFT"
+  show Ant.Base.Right = "RIGHT"
 
 data SenseDir
   = Here
   | Ahead
   | LeftAhead
   | RightAhead
-  deriving (Show, Ord, Eq, Generic)
+  deriving (Ord, Eq, Generic)
+
+instance Show SenseDir where
+  show Here       = "HERE"
+  show Ahead      = "AHEAD"
+  show LeftAhead  = "LEFTAHEAD"
+  show RightAhead = "RIGHTAHEAD"
 
 data Marker
   = Zero
@@ -59,16 +65,16 @@ data Condition
   deriving (Eq, Ord, Generic)
 
 instance Show Condition where
-  show Friend         = "Friend"
-  show Foe            = "Foe"
-  show FriendWithFood = "FriendWithFood"
-  show FoeWithFood    = "FoeWithFood"
-  show Food           = "Food"
-  show Rock           = "Rock"
+  show Friend         = "FRIEND"
+  show Foe            = "FOE"
+  show FriendWithFood = "FRIENDWITHFOOD"
+  show FoeWithFood    = "FOEWITHFOOD"
+  show Food           = "FOOD"
+  show Rock           = "ROCK"
   show (Marker l)     = show l
-  show FoeMarker      = "FoeMarker"
-  show Home           = "Home"
-  show FoeHome        = "FoeHome"
+  show FoeMarker      = "FOEMARKER"
+  show Home           = "HOME"
+  show FoeHome        = "FOEHOME"
 
 data Command a
   = Sense SenseDir a a Condition
@@ -79,7 +85,17 @@ data Command a
   | Turn LeftOrRight a
   | Move a a
   | Flip Int a a
-  deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic)
+  deriving (Eq, Ord, Functor, Foldable, Traversable, Generic)
+
+instance Show a => Show (Command a) where
+  show (Sense q w e r) = "SENSE "  ++ concat [show q, " ", show w, " ", show e, " ", show r]
+  show (Mark q w)      = "MARK "   ++ concat [show q, " ", show w]
+  show (Unmark q w)    = "UNMARK " ++ concat [show q, " ", show w]
+  show (PickUp q w)    = "PICKUP " ++ concat [show q, " ", show w]
+  show (Drop q)        = "DROP "   ++ concat [show q]
+  show (Turn q w)      = "TURN "   ++ concat [show q, " ", show w]
+  show (Move q w)      = "MOVE "   ++ concat [show q, " ", show w]
+  show (Flip q w e)    = "FLIP "   ++ concat [show q, " ", show w, " ", show e]
 
 showCmds :: Show a => [(a, Command a)] -> String
 showCmds = unlines . map showInstr
