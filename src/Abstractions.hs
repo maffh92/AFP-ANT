@@ -70,48 +70,30 @@ nop = cont (flip_ 1 . goto)
 nops :: (MonadFix m, Label l)  => Int -> AntT m l ()
 nops n = replicateM_ n nop
 
--- | While some condition holds execute.
--- while :: (Label l, MonadFix m) => SenseTest -> AntT m l ()   -> AntT m l ()
--- while cond body = mdo
---   l     <- label
---   ifSense cond (goto l) (goto break)
---   break <- label
---   return ()
 
--- |Investigate the environment and branch accordingly
--- if' :: (MonadFix m, Label l) => SenseTest -> AntT m l () -> AntT m l () -> AntT m l ()
--- if' T              t f = t
--- if' F              t f = t
--- if' (dir :=: what) t f = sense dir what t f
--- if' (a   :&: b   ) t f = mdo
---   t_label <- label <* t
---   f_label <- label <* f
--- if' (a   :|: b   ) ifT ifF = 
+-- | While condition is true, run code
+while :: (MonadFix m, Label l) => SenseTest -> AntT m l a -> AntT m l ()
+while cond code = loop (\cont brk -> if' cond (code >> cont) brk)
 
--- ifSense (a   :&: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a (ifSense b ifT' ifF') ifF')
--- ifSense (a   :|: b   ) ifT ifF = optimize2 ifT ifF (\ifT' ifF' -> ifSense a ifT' (ifSense b ifT' ifF'))
+-- | Investigate the environment and branch accordingly
+if' :: (MonadFix m, Label l) => SenseTest -> AntT m l () -> AntT m l () -> AntT m l ()
+if' T         t f = t
+if' F         t f = f
+if' (d :=: s) t f = sense d s t f
+if' (a :&: b) t f = optimizeBranches t f (\t' f' -> if' a (if' b t' f') f')
+if' (a :|: b) t f = optimizeBranches t f (\t' f' -> if' a t' (if' b t' f'))
+if' (Not cnd) t f = if' cnd f t
 
-
-
--- -- |Optimalization of a routine with two subroutines.
--- -- |Instead of generating the same code several times, include the code once and generate entry points
--- -- |instead.
--- optimize2 :: (MonadFix m) => AntT m l a
---                           -> AntT m l b
---                           -> (AntT m l () -> AntT m l () -> AntT m l c)
---                           -> AntT m l c
--- optimize2 sub1 sub2 main = mdo
---       val <- main (goto sub1') (goto sub2')
---       goto out
+-- | Generate optimized code for nested branches (note: not reentrant!)
+optimizeBranches :: (MonadFix m) => AntT m l a 
+                                 -> AntT m l b
+                                 -> (AntT m l () -> AntT m l () -> AntT m l c)
+                                 -> AntT m l c
+optimizeBranches b1 b2 main = mdo
+    val <- main (goto b1') (goto b2'); goto out
+    b1' <- label; b1; goto out
+    b2' <- label; b2; goto out
+    out <- label
+    return val
 
 
---       sub1' <- label
---       sub1
---       goto out
-
---       sub2' <- label
---       sub2
---       goto out
-     
---       out <- label
---       return val
