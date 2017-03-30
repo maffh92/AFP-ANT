@@ -27,7 +27,7 @@ genCommand lbs =
         , Turn   <$> arbitrary <*> genGoto
 
         , Move   <$> genGoto <*> genGoto
-        , Flip   <$> arbitrary <*> genGoto <*> genGoto
+        , Flip   <$> (getPositive <$> arbitrary) <*> genGoto <*> genGoto
         , Sense  <$> arbitrary <*> genGoto <*> genGoto <*> arbitrary
         , PickUp <$> genGoto <*> genGoto]
 
