@@ -58,7 +58,7 @@ class Ord l => Label l where
   z :: l
   s :: l -> l
   toInt :: l -> Int
- 
+
 
 -- | Cannonical implementation of Label.
 newtype L = L { _lab :: Int }
@@ -69,7 +69,7 @@ makeLenses ''L
 instance Label L where
   z     = L 0
   s     = lab %~ (+1)
-  toInt = view lab  
+  toInt = view lab
 
 instance Show L where
   show = show . view lab
@@ -185,7 +185,7 @@ unmark = singleCmd . Unmark
 drop' :: (MonadFix m, Label l) => AntT m l ()
 drop' = singleCmd Drop
 
-turn :: (MonadFix m, Label l) => TurnDir -> AntT m l ()
+turn :: (MonadFix m, Label l) => LeftOrRight -> AntT m l ()
 turn = singleCmd . Turn
 
 --------------------------------------------------------------------------------

@@ -29,7 +29,7 @@ module Ant
   , four
   , five
   -- ** Turning direction
-  , TurnDir
+  , LeftOrRight
   , left
   , right
   -- ** Code generation
@@ -37,7 +37,7 @@ module Ant
   , compileProg
   ) where
 
-import           Ant.Base as B
+import           Ant.Base
 import           Ant.Monad
 
 import           Control.Lens
@@ -109,8 +109,8 @@ four = Four
 five :: Marker
 five = Five
 
-left :: TurnDir
-left = B.Left
+left :: LeftOrRight
+left = IsLeft
 
-right :: TurnDir
-right = B.Right
+right :: LeftOrRight
+right = IsRight

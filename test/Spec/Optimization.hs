@@ -8,7 +8,7 @@ import           Control.Category
 import           Prelude                hiding (id, (.))
 
 import           Ant.Optimization
-
+import Ant.Monad
 -- | Reified optimization.
 data Op = UnRC         -- ^ unreachableOpt
         | DC           -- ^ duplicateCodeOpt
@@ -28,7 +28,7 @@ instance Show Op where
       Id            -> "id"
 
 -- | Interpret a reified Optimization as a real optimization.
-toOptimization :: Ord l => Op -> Optimization l
+toOptimization :: Op -> Optimization L
 toOptimization op =
   case op of
     UnRC          -> unreachableOpt

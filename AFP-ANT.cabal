@@ -21,11 +21,14 @@ library
                        Ant.Optimization
                        Abstractions,
                        Strategy,
+                       Simulator,
                        Examples
   build-depends:       base >= 4.7 && < 5,
                        containers,
                        lens,
-                       tardis
+                       tardis,
+                       mtl,
+                       array
   default-language:    Haskell2010
   ghc-options:         -Wall
 

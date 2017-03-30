@@ -9,7 +9,7 @@ import           Spec.Optimization
 
 import           Ant
 import           Ant.Optimization
-
+import qualified Simulator        as S
 
 main :: IO ()
 main = hspec $ do

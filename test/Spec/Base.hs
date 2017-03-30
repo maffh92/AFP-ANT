@@ -63,6 +63,6 @@ instance Arbitrary Condition where
 instance Arbitrary Marker where
   arbitrary = genericArbitrary uniform
 
-instance Arbitrary TurnDir where
+instance Arbitrary LeftOrRight where
   arbitrary = genericArbitrary uniform
 

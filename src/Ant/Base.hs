@@ -7,10 +7,14 @@ module Ant.Base where
 import           GHC.Generics
 
 {- describes the output state machine -}
-data TurnDir
-  = Left
-  | Right
-  deriving (Show, Ord, Eq, Generic)
+data LeftOrRight
+  = IsLeft
+  | IsRight
+  deriving (Ord, Eq, Generic)
+
+instance Show LeftOrRight where
+  show IsLeft  = "Left"
+  show IsRight = "Right"
 
 data SenseDir
   = Here
@@ -72,7 +76,7 @@ data Command a
   | Unmark Marker a
   | PickUp a a
   | Drop a
-  | Turn TurnDir a
+  | Turn LeftOrRight a
   | Move a a
   | Flip Int a a
   deriving (Show, Eq, Ord, Functor, Foldable, Traversable, Generic)

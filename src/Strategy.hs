@@ -200,7 +200,7 @@ senseHome home' nothing =
 
 turnTo :: 
     (MonadFix m, Label l) => 
-    TurnDir -> 
+    LeftOrRight -> 
     AntT m l () -> 
     AntT m l ()
 turnTo dir destination = mdo
