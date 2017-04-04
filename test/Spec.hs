@@ -7,7 +7,7 @@ import           Test.QuickCheck.Monadic
 
 import           Spec.Base
 import           Spec.Optimization
-import Spec.Simulator
+import           Simulator
 
 import           Ant
 import           Ant.Optimization
@@ -21,21 +21,23 @@ main = hspec $ do
     testOptimization
 
   propWith 100 "any optimization preserves equivalence" $
-    testOptimizationInSimulation 1000
+    testOptimizationInSimulation 10000
 
--- | Test a optimization
+-- | Test a optimization.
 testOptimization :: Op -> AntMTest -> Bool
 testOptimization opt antm =
   valid $ applyOpt (toOptimization opt)
                    (compileProg (toAntM antm))
 
 
+-- | Test that the optimization preserves behaviour.
 testOptimizationInSimulation :: Int -> Op -> Int -> AntMTest -> Property
 testOptimizationInSimulation r opt seed antm =
   let cprog = compileProg (toAntM antm)
   in monadicIO $ do
-    gs1  <- run $ initGameState seed cprog >>= runNRounds r
-    gs2  <- run $ initGameState seed (applyOpt (toOptimization opt) cprog) >>= runNRounds r
+    gs1  <- run $ initGameState seed tinyWorld cprog >>= runNRounds r
+    gs2  <- run $ initGameState seed tinyWorld (applyOpt (toOptimization opt)
+                                               cprog) >>= runNRounds r
     run (gs1 =~= gs2)
 
 -- | Test validity of programs
@@ -50,3 +52,18 @@ testMonad = valid . compileProg . toAntM
 -- can be specified.
 propWith :: Testable prop => Int -> String -> prop -> Spec
 propWith n str = modifyMaxSuccess (const n) . prop str
+
+-- | Example world
+tinyWorld = unlines
+  ["10"
+  ,"10"
+  ,"# # # # # # # # # #"
+  ,"# 9 9 . . . . 3 3 #"
+  ,"# 9 # . . . . . . #"
+  ,"# . # . . . . . . #"
+  ,"# . . 5 . . . . . #"
+  ,"# . . . . . 5 . . #"
+  ,"# . . . . . . # . #"
+  ,"# . . . + . . # 9 #"
+  ,"# 3 3 . . . . 9 9 #"
+  ," # # # # # # # # # #"]

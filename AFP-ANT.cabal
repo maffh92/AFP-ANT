@@ -2,19 +2,21 @@ name:                AFP-ANT
 version:             0.1.0.0
 -- synopsis:
 -- description:
-homepage:            https://github.com/githubuser/AFP-ANT#readme
+homepage:            https://github.com/maffh92/AFP-ANT
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2017 Author name here
-category:            Web
+author:              Martijn Fleuren, Marinus Oostegard,
+                     Carlos Tomé Cortiñas & Matthew Swart
+-- maintainer:          example@example.com
+copyright:           2017 The authors above
+category:            Languages
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
+  other-modules:       Simulator.Base
   exposed-modules:     Ant,
                        Ant.Base,
                        Ant.Monad,
@@ -32,20 +34,11 @@ library
   default-language:    Haskell2010
   ghc-options:         -Wall
 
-executable AFP-ANT-exe
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  build-depends:       base
-                     , AFP-ANT
-  default-language:    Haskell2010
-
 test-suite AFP-ANT-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   other-modules:       Spec.Base
                      , Spec.Optimization
-                     , Spec.Simulator
   main-is:             Spec.hs
   build-depends:       base
                      , AFP-ANT
@@ -61,4 +54,4 @@ test-suite AFP-ANT-test
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/AFP-ANT
+  location: https://github.com/maffh92/AFP-ANT
