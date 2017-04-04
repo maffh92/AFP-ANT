@@ -11,7 +11,7 @@ import           Simulator
 import           Ant
 import           Ant.Optimization
 
-import Spec.Optimization
+import           Spec.Optimization
 
 main :: IO ()
 main = hspec $ do
@@ -22,7 +22,7 @@ main = hspec $ do
     testOptimization
 
   propWith 100 "any optimization preserves equivalence" $
-    testOptimizationInSimulation 10000
+    testOptimizationInSimulation 100000
 
 -- | Test a optimization.
 testOptimization :: Op -> AntMTest L -> Bool
@@ -63,11 +63,11 @@ tinyWorld = unlines
   ,"10"
   ,"# # # # # # # # # #"
   ,"# 9 9 . . . . 3 3 #"
-  ,"# 9 # . . . . . . #"
+  ,"# 9 # . - - . . . #"
   ,"# . # . . . . . . #"
   ,"# . . 5 . . . . . #"
   ,"# . . . . . 5 . . #"
   ,"# . . . . . . # . #"
-  ,"# . . . + . . # 9 #"
+  ,"# . . . + + . # 9 #"
   ,"# 3 3 . . . . 9 9 #"
   ," # # # # # # # # # #"]

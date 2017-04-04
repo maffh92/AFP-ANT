@@ -35,7 +35,7 @@ module Ant.Monad
   , toCmds
   -- * Labels
   , Label(..)
-  , L(..)
+  , L
   ) where
 
 import           Ant.Base
@@ -104,6 +104,7 @@ size  = length . M.keys . view commands
 -- | Turn a Program into a list of Command ordered by state
 toCmds :: Label l => Program l -> [Command l]
 toCmds = map snd . M.toAscList . view commands
+
 --------------------------------------------------------------------------------
 -- Monad
 

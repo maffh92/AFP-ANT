@@ -1,14 +1,15 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Spec.Optimization where
 
+import           Control.Category
 import           Generic.Random.Generic
 import           GHC.Generics
+import           Prelude                   hiding (id, (.))
 import           Test.QuickCheck.Arbitrary
-import           Control.Category
-import           Prelude                hiding (id, (.))
 
+import           Ant.Monad
 import           Ant.Optimization
-import Ant.Monad
+
 -- | Reified optimization.
 data Op = UnRC         -- ^ unreachableOpt
         | DC           -- ^ duplicateCodeOpt
