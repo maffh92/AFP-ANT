@@ -6,15 +6,16 @@ module Genetic.Evolve
   , fitness
   ) where
 
-import Data.Array.IO
+import Ant.Arbitrary.Base
 import Ant.Base
 import Ant.Monad
 import Control.Lens
 import Control.Monad
-import Ant.Arbitrary.Base
-import Test.QuickCheck
+import Data.Array.IO
 import Simulator
 import Simulator.Base
+import Strategy
+import Test.QuickCheck
 
 data GeneticConfig = GeneticConfig
   { _numRoundsPerGeneration :: Int -- Simulate this many rounds per program
@@ -26,7 +27,7 @@ makeLenses ''GeneticConfig
 
 defaultGeneticConfig = GeneticConfig
   { _numRoundsPerGeneration = 10000
-  , _stopAfter              = 1
+  , _stopAfter              = 10
   , _linesPerFile           = 10000
   }
 
@@ -40,8 +41,8 @@ search :: GeneticConfig -> IO [Command L]
 search config =
   do -- Generate the initial pair of (program, fitness)
     prog      <- newProgram (view linesPerFile config)
-    worldF    <- readFile "test-data/sample0.world"
-    blackProg <- readInstructions "test-data/blackant.ant"
+    worldF    <- readFile "../test-data/sample0.world"
+    blackProg <- readInstructions "../test-data/blackant.ant"
 
     _fitness <- fitness config worldF prog blackProg
     let e = (prog, _fitness)
