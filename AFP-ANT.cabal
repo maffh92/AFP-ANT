@@ -15,6 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
+  other-modules:       Simulator.Base
   exposed-modules:     Ant,
                        Ant.Base,
                        Ant.Monad,
@@ -45,7 +46,6 @@ test-suite AFP-ANT-test
   hs-source-dirs:      test
   other-modules:       Spec.Base
                      , Spec.Optimization
-                     , Spec.Simulator
   main-is:             Spec.hs
   build-depends:       base
                      , AFP-ANT
