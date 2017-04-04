@@ -32,6 +32,7 @@ module Ant.Monad
   , entry
   , valid
   , size
+  , toCmds
   -- * Labels
   , Label(..)
   , L(..)
@@ -46,7 +47,7 @@ import           Control.Monad.Trans.Tardis (TardisT, runTardisT)
 import           Data.Foldable
 import           Data.Map                   (Map)
 import qualified Data.Map                   as M (empty, insert, keys, keysSet,
-                                                  lookup)
+                                                  lookup, toAscList)
 import           Data.Maybe                 (isJust)
 import qualified Data.Set                   as S (fromList, (\\))
 
@@ -100,6 +101,9 @@ valid prog =
 size :: Ord l => Program l -> Int
 size  = length . M.keys . view commands
 
+-- | Turn a Program into a list of Command ordered by state
+toCmds :: Label l => Program l -> [Command l]
+toCmds = map snd . M.toAscList . view commands
 --------------------------------------------------------------------------------
 -- Monad
 

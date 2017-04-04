@@ -2,6 +2,7 @@
 module Genetic.Evolve
   ( newProgram
   , search
+  , defaultGeneticConfig
   , fitness
   ) where
 
@@ -14,7 +15,6 @@ import Ant.Arbitrary.Base
 import Test.QuickCheck
 import Simulator
 import Simulator.Base
-import Genetic.ReadInstructions hiding (AntInstructions)
 
 data GeneticConfig = GeneticConfig
   { _numRoundsPerGeneration :: Int -- Simulate this many rounds per program
@@ -31,23 +31,8 @@ defaultGeneticConfig = GeneticConfig
   }
 
 -- | Generate a new program of length l
-newProgram :: Int -> IO [Command L]
-newProgram l = generate $ resize 1 $ newProgram' l
-  where
-    -- | Generate a random program of n lines
-    newProgram' 0 = return []
-    newProgram' n
-      | n > 0 = f n
-      | otherwise = fail "n is negative"
-      where
-        f k = do
-          program <- generateProgram k
-          let program' = unAntMTest program
-          return program'
-
-        generateProgram n = do
-          let lbs = take n (iterate s z)
-          AntMTest <$> replicateM n (genCommand lbs)
+newProgram :: Label l => Int -> IO [Command l]
+newProgram = generate . genProgram
 
 type Fitness = Int
 
@@ -55,14 +40,15 @@ search :: GeneticConfig -> IO [Command L]
 search config =
   do -- Generate the initial pair of (program, fitness)
     prog      <- newProgram (view linesPerFile config)
-    worldF    <- readFile "Genetic/sample0.world"
-    blackProg <- readInstructions "Genetic/blackant.ant"
+    worldF    <- readFile "test-data/sample0.world"
+    blackProg <- readInstructions "test-data/blackant.ant"
 
     _fitness <- fitness config worldF prog blackProg
     let e = (prog, _fitness)
 
     -- thunk of all the other programs to evaluate
-    programs <- replicateM (view stopAfter config - 1) (newProgram (view linesPerFile config))
+    programs <- replicateM (view stopAfter config - 1)
+                           (newProgram 10)
 
 
     -- Evaluate all of them, keep the best one

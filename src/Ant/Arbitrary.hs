@@ -1,7 +1,5 @@
-module Arbitrary
+module Ant.Arbitrary
   ( module Base
-  , module Optimisation
   ) where
 
-import Ant.Arbitrary.Base as Base
-import Ant.Arbitrary.Optimisation as Optimisation
+import           Ant.Arbitrary.Base as Base

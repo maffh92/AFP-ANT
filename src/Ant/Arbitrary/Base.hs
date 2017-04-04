@@ -10,14 +10,18 @@ import           Test.QuickCheck
 import           Ant
 import           Ant.Base
 
-newtype AntMTest = AntMTest { unAntMTest :: [Command L] }
-                            deriving (Show)
+newtype AntMTest l = AntMTest { unAntMTest :: [Command l] }
+                   deriving Show
 
-instance Arbitrary AntMTest where
+instance Label l => Arbitrary (AntMTest l) where
   arbitrary = do
     n <- (+1) <$> arbitrarySizedNatural
-    let lbs = take n (iterate s z)
-    AntMTest <$> replicateM n (genCommand lbs)
+    AntMTest <$> genProgram n
+
+genProgram :: Label l => Int -> Gen [Command l]
+genProgram n =
+  let lbs = take n (iterate s z)
+  in  replicateM n (genCommand lbs)
 
 genCommand :: Label l => [l] -> Gen (Command l)
 genCommand lbs =
@@ -27,19 +31,15 @@ genCommand lbs =
         , Turn   <$> arbitrary <*> genGoto
 
         , Move   <$> genGoto <*> genGoto
-        , Flip   <$> arbitrary <*> genGoto <*> genGoto
+        , Flip   <$> (getPositive <$> arbitrary) <*> genGoto <*> genGoto
         , Sense  <$> arbitrary <*> genGoto <*> genGoto <*> arbitrary
         , PickUp <$> genGoto <*> genGoto]
-
-
   where
     genGoto = elements lbs
 
-toAntM :: AntMTest -> AntM L ()
-toAntM = interpretAll . unAntMTest
-
-interpretAll :: Label l => [Command l] -> AntM l ()
-interpretAll = foldl (\m -> (m >>) . interpret) (return ())
+toAntM :: Label l => AntMTest l -> AntM l ()
+toAntM = foldl (\m -> (m >>) . interpret) (return ())
+       . unAntMTest
 
 interpret :: Label l => Command l -> AntM l ()
 interpret cmd =

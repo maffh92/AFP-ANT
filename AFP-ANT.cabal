@@ -16,29 +16,34 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  other-modules:       Simulator.Base
+  other-modules:       Simulator.Base,
+                       Ant.Arbitrary.Base
   exposed-modules:     Ant,
                        Ant.Base,
                        Ant.Monad,
-                       Ant.Optimization
+                       Ant.Optimization,
+                       Ant.Arbitrary,
                        Abstractions,
                        Strategy,
                        Simulator,
-                       Examples
+                       Examples,
+                       Genetic,
+                       Genetic.Evolve
   build-depends:       base >= 4.7 && < 5,
                        containers,
                        lens,
                        tardis,
                        mtl,
-                       array
+                       generic-random,
+                       array,
+                       QuickCheck
   default-language:    Haskell2010
   ghc-options:         -Wall
 
 test-suite AFP-ANT-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
-  other-modules:       Spec.Base
-                     , Spec.Optimization
+  other-modules:       Spec.Optimization
   main-is:             Spec.hs
   build-depends:       base
                      , AFP-ANT
