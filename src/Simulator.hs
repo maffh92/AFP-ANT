@@ -11,13 +11,13 @@ import           Control.Lens
 import           Control.Monad       (replicateM_)
 import           Control.Monad.State
 import           Data.Array.IO
-import           Data.Char           (isDigit)
+import           Data.Char           (isDigit, toUpper)
 import qualified Data.Map            as M
 import qualified Data.Set            as S
 
 import           Simulator.Base
-import           Simulator.ReadInstructions
 import           Ant.Monad
+import           Ant.Base
 
 -- | Generate AntInstructions from a Program.
 -- This leaves in IO because AntInstructions is a IOArray.
@@ -208,5 +208,5 @@ stringToInstruction string =
           _       -> error "invalid LeftRight value"
 
     readST  = (\i -> if i > 9999 then error ("State >9999: " ++ show i) else i) . readP
-    readI   = (\i -> if i > 5 then i `mod` 6 else i) . readP
+    readI   = toEnum . readP
     readP s = if isNum s then read s else error ("Not a number: " ++ s)

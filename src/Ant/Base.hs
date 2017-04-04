@@ -21,7 +21,7 @@ data SenseDir
   | Ahead
   | LeftAhead
   | RightAhead
-  deriving (Ord, Eq, Generic)
+  deriving (Ord, Eq, Generic, Read)
 
 instance Show SenseDir where
   show Here       = "HERE"
@@ -36,7 +36,7 @@ data Marker
   | Three
   | Four
   | Five
-  deriving (Eq, Generic)
+  deriving (Eq, Generic, Read)
 
 instance Enum Marker where
   fromEnum x = case x of
@@ -62,7 +62,7 @@ data Condition
   | FoeMarker
   | Home
   | FoeHome
-  deriving (Eq, Ord, Generic)
+  deriving (Eq, Ord, Generic, Read)
 
 instance Show Condition where
   show Friend         = "FRIEND"
