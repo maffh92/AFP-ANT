@@ -108,9 +108,9 @@ try n m f = mdo
 
 -- | Investigate the environment and branch accordingly
 if' :: (MonadFix m, Label l) => SenseTest -> AntT m l () -> AntT m l () -> AntT m l ()
-if' T         t f = t
-if' F         t f = f
-if' (d :=: s) t f = sense d s t f
+if' T         t _ = t
+if' F         _ f = f
+if' (d :=: s') t f = sense d s' t f
 if' (a :&: b) t f = optimizeBranches t f (\t' f' -> if' a (if' b t' f') f')
 if' (a :|: b) t f = optimizeBranches t f (\t' f' -> if' a t' (if' b t' f'))
 if' (Not cnd) t f = if' cnd f t
@@ -122,8 +122,8 @@ optimizeBranches :: (MonadFix m) => AntT m l a
                                  -> AntT m l c
 optimizeBranches b1 b2 main = mdo
     val <- main (goto b1') (goto b2'); goto out
-    b1' <- label; b1; goto out
-    b2' <- label; b2; goto out
+    b1' <- label <* b1 <* goto out
+    b2' <- label <* b2 <* goto out
     out <- label
     return val
 

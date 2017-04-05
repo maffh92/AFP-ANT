@@ -33,7 +33,13 @@ strategies =
 -}
 
 strategy :: (MonadFix m, Label l) => AntT m l ()
-strategy = do
+strategy = choose [killer , bringFood]
+
+killer :: (MonadFix m, Label l) => AntT m l ()
+killer = search Nothing foe
+
+bringFood :: (MonadFix m, Label l) => AntT m l ()
+bringFood = do
   search Nothing food
   redo move_
   pickup_ (search Nothing food)
