@@ -125,13 +125,13 @@ searchForFood = do
   moveAs food
   pickup_ (goto s)
 
-  while (Not (   ahead :=: marker zero
+  while (Not (   ahead :=: marker three
              :|: ahead :=: marker one
              :|: ahead :=: marker two)) $ do
     try 2 move turnRandom
     flip_ 20 turnRandom
 
-  caseM [ (ahead :=: marker zero, if' (rightAhead :=: marker zero)
+  caseM [ (ahead :=: marker three, if' (rightAhead :=: marker three)
                                       (redo move_ >> turn left)
                                       (redo move_ >> turn right))
         , (ahead :=: marker one, if' (rightAhead :=: marker one)

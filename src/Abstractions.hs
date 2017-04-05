@@ -118,10 +118,10 @@ optimizeBranches b1 b2 main = mdo
 --------------------------------------------------------------------------------
   -- Conditional combinators
 
-actOnCond :: (MonadFix m, Label l)
+caseM :: (MonadFix m, Label l)
           => [(SenseTest , AntT m l ())]
           -> AntT m l ()
-actOnCond = foldr (uncurry if') (return ())
+caseM = foldr (uncurry if') (return ())
 
 doOnTheDir ::(MonadFix m, Label l)
            =>  Condition
@@ -130,9 +130,9 @@ doOnTheDir ::(MonadFix m, Label l)
            -> AntT m l ()
            -> AntT m l ()
 doOnTheDir cond ah le ri =
-  actOnCond [( ahead      :=: cond, ah)
-            ,( leftAhead  :=: cond, le)
-            ,( rightAhead :=: cond, ri)]
+  caseM [( ahead      :=: cond, ah)
+        ,( leftAhead  :=: cond, le)
+        ,( rightAhead :=: cond, ri)]
 
 --------------------------------------------------------------------------------
   -- Randomness combinators
