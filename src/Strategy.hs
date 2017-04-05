@@ -47,6 +47,8 @@ bringFood = do
   search  (Just zero) home
   redo move_
   drop'
+  for 2 $ turn left
+  redo move_
 
 searchForFood :: (MonadFix m, Label l) => AntT m l ()
 searchForFood = do
@@ -55,11 +57,28 @@ searchForFood = do
     (redo move_)
     (cross left right)
     (cross right left)
-    where
-      cross d1 d2 = do turn d1
-                       redo move_
-                       turn d2
-                       redo move_
+
+
+cross :: (MonadFix m, Label l) => LeftOrRight -> LeftOrRight -> AntT m l ()
+cross d1 d2 = do turn d1
+                 redo move_
+                 turn d2
+                 redo move_
+
+
+
+followTrail :: (MonadFix m, Label l) => AntT m l ()
+followTrail = do
+  _trail <- label
+  search Nothing (marker zero)
+  doOnTheDir food
+    (redo move_)
+    (cross left right)
+    (cross right left)
+  if' (ahead :=: food)
+      (goto _trail)
+      bringFood
+
 
 guardFood :: (MonadFix m, Label l) => AntT m l ()
 guardFood = do
