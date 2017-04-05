@@ -214,7 +214,7 @@ followTrail = do
       bringFood
     $ if' (ahead :=: home) 
           ((for 2 $ turn left) >> goto _trail)
-          ((for 2 $ turn left) >> clearTrail zero >> searchForFood)
+          ((for 2 $ turn left) >> clearTrail zero >> searchForFood2 _trail)
 
 
 clearTrail :: (MonadFix m, Label l) => Marker -> AntT m l ()
