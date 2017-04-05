@@ -32,10 +32,9 @@ loop cmds = mdo
     brk <- label
     return ()
 
-
--- |Run a program that can fail repeatedly until it succeeds
+-- | Run a program that can fail repeatedly until it succeeds
 redo :: MonadFix m => (AntT m l () -> AntT m l a) -> AntT m l ()
-redo cmd = loop (\cont brk -> cmd cont >> brk)
+redo cmd = loop (\ct brk -> cmd ct >> brk)
 
 -- |Select one of the programs uniformly at random and run it
 choose :: (Label l, MonadFix m) => [AntT m l a] -> AntT m l ()
@@ -45,8 +44,15 @@ choose cmds = loop (\cont brk -> choose' brk cmds >> brk)
     choose' end [cmd]       = cmd >> end
     choose' end (cmd:cmds)  = flip' (length cmds+1) (cmd >> end) (choose' end cmds)
 
+-- | Turn randomly to either left or right.
+turnRandom :: (Label l, MonadFix m) => AntT m l ()
+turnRandom = choose [turn left, turn right]
 
-data SenseTest = SenseDir :=: Condition
+for :: (Label l, MonadFix m) => Int -> AntT m l () -> AntT m l ()
+for = replicateM_
+-- | Always
+
+data SenseTest = SenseDir  :=: Condition
                | SenseTest :&: SenseTest
                | SenseTest :|: SenseTest
                | T | F
@@ -56,13 +62,17 @@ infixr 4 :=:
 infixr 3 :&:
 infixr 2 :|:
 
-cont :: (Label l, MonadFix m) => (l -> AntT m l a) -> AntT m l a
+-- | Given a continuation execute it
+-- with a label after it.
+cont :: (Label l, MonadFix m)
+     => (l -> AntT m l a)
+     -> AntT m l a
 cont c = mdo
   a <- c l
   l <- label
   return a
 
--- | Do nothing.nt
+-- | Do nothing.
 nop :: (Label l, MonadFix m) => AntT m l ()
 nop = cont (flip_ 1 . goto)
 
@@ -71,9 +81,23 @@ nops :: (MonadFix m, Label l)  => Int -> AntT m l ()
 nops n = replicateM_ n nop
 
 
--- | While condition is true, run code
+-- | Do an
+forever :: (Label l, MonadFix m) => AntT m l a -> AntT m l ()
+forever = while T
+
+-- | While condition is met, run code
 while :: (MonadFix m, Label l) => SenseTest -> AntT m l a -> AntT m l ()
 while cond code = loop (\cont brk -> if' cond (code >> cont) brk)
+
+-- | Look until we can find what we are looking for.
+-- leave a mark on the way.
+search :: (MonadFix m, Label l)
+       => Marker
+       -> Condition
+       -> AntT m l ()
+search m cond =
+  while (Not (ahead :=: cond)) $
+    choose [for 5 (redo move_ >> mark m >> turnRandom), turnRandom]
 
 -- | Investigate the environment and branch accordingly
 if' :: (MonadFix m, Label l) => SenseTest -> AntT m l () -> AntT m l () -> AntT m l ()

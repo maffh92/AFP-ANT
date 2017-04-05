@@ -231,6 +231,7 @@ move_ :: (MonadFix m, Label l)
       => AntT m l () -- ^ Failure
       -> AntT m l ()
 move_ = noBranchingCmd Move
+
 pickup_ :: (MonadFix m, Label l)
         => AntT m l () -- ^ Failure
         -> AntT m l ()
