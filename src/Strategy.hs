@@ -40,8 +40,8 @@ strategy =
 highWayMakers :: (MonadFix m, Label l)
          => AntT m l ()
 highWayMakers =
-  choose [ makeHighway zero rock home []
-         , makeHighway zero rock home [left, left, left]
+  choose [ makeHighway three rock home []
+         , makeHighway three rock home [left, left, left]
          , makeHighway one rock home [right]
          , makeHighway one rock home [left, left]
          , makeHighway two rock home [right, right]
@@ -114,7 +114,7 @@ avoid = do
   where
     escape l d1 d2 = do
       turn d1
-      move (turnAll >> move_ (goto l) >> turnAll >> turn d2)
+      move (turnAll >> move_ (turnAll >> turn d2 >> goto l) >> turnAll >> turn d2)
            (turn d2)
 
 
@@ -145,7 +145,7 @@ searchForFood = do
                       (move_ avoid)
 
   if' (ahead :=: home)
-      (move_ avoid >> drop')
+      (for 3 (move_ avoid)    >> drop')
       (move_ avoid >> turnAll >> goto l)
 
 guardHome :: (MonadFix m, Label l) => AntT m l ()
