@@ -15,6 +15,7 @@ header-includes:
 # Overview
 
 * Architecture
+* Genetic Strategy search
 * Optimizations
 * Testing
 
@@ -98,12 +99,6 @@ loop cmds = mdo
 
 # Genetic (I) (Genetic/Evolve.hs)
 
-* Instead of thinking deep about how to write a strategy ...
-
----
-
-# Genetic (I) (Genetic/Evolve.hs)
-
 * Instead of thinking deep about how to write a strategy, let a computer do the
   searching for you.
 * How to generate random programs?
@@ -113,32 +108,19 @@ loop cmds = mdo
 # Genetic (II) Meat of the search
 
 * QuickCheck has `generate :: Gen a -> IO a` to transfer random samples to `IO`
-* Use some kind of `max` function:
+* Use some kind of `max' function and then use it in a fold
 
 ```haskell
-evalP :: (Program, Fitness) -> Program -> IO (Program, Fitness)
-evalP (prog1, fit1) prog2 = do
-  fit2 <- fitness prog2
-
-  return $ case fit1 `compare` fit2 of
-    LT -> (prog2, fit2)
-    _  -> (prog1, fit1) -- Also for EQ! y? idk. dm.
-```
-
----
-
-# Genetic (II) Meat of the search ctd
-
-* Then, fold some container over this max function
-
-```haskell
-search :: Int -> IO Program
+evalP (p1, f1) p2 =
+  fitness p2 >>=
+    \f2 -> return $ if f1 < f2 then (p2, f2)
+      else (p1, f1)
 search n = do
-  prog1 <- newProgram
-  fit1  <- fitness prog1
-  xs    <- generate n - 1 programs
-
+  prog1    <- newProgram
+  fit1     <- fitness prog1
+  xs       <- generate n - 1 programs
   (best,_) <- foldM evalP (prog1, fit1) xs
+  return best
 ```
 
 ---
