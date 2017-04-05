@@ -59,9 +59,18 @@ searchForFood = do
     (cross left right)
     (cross right left)
 
-searchForFood2 :: (MonadFix m, Label l) => AntT m l ()
-searchForFood2 = do
-  search Nothing food
+searchForFood2 :: (MonadFix m, Label l) => l -> AntT m l ()
+searchForFood2 l = do
+  while (Not (ahead :=: food :|: leftAhead :=: food :|: rightAhead :=: food))
+        (
+          if' (Not (ahead :=: (marker zero) :|: leftAhead :=: (marker zero) :|: rightAhead :=: (marker zero)))
+              (
+                do
+                try 2 move turnRandom
+                flip_ 15 turnRandom
+              )
+              (goto l)
+        )
   doOnTheDir food
     (redo move_)
     (cross left right)
