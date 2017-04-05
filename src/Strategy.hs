@@ -59,7 +59,7 @@ start ::
 start = mdo
   flip' 10 (goto _searchFood) guard --This line is supposed to divide the work between the ants, but it does not work.
   move (goto _searchFood) (goto _searchFood)
-  _searchFood  <- label 
+  _searchFood  <- label
   while (Not (here :=: food)) (findFood _searchFood)
   if' (here :=: home)
        ( mdo --At this point you found food, but when you at your home it does not make sense to use pickup.
@@ -69,12 +69,12 @@ start = mdo
       )
       ( mdo
         pickup (findMarker2 _pickup) (findMarker2 _pickup)
-        
+
         _pickup <- label
         -- while (Not $ ahead :=: (marker two)) (turn left)
         unmark two --Mark two is a special mark, which is placed behind the ant before this step.
         move (goto _findHome) (goto _findHome)
-      ) 
+      )
   _findHome <- label
   while (Not $ here :=: home) (findHome _findHome)
   drop'
@@ -86,14 +86,14 @@ start = mdo
 
 --The guard function is supposed to guard the border of the base. However it's not working.
 guard :: (MonadFix m, Label l) => AntT m l ()
-guard = mdo 
+guard = mdo
   while (ahead :=: home) (move nop nop)
   while (ahead :=: marker four) nop
 
 
 findFood :: (MonadFix m, Label l) =>  l -> AntT m l ()
-findFood l = 
-    if' (ahead :=: food) 
+findFood l =
+    if' (ahead :=: food)
         (mark two >> (move (goto l) (randomMove $ goto l)))
       $ if' (rightAhead :=: food)
             (move (turn right) (randomMove $ goto l))
@@ -101,10 +101,10 @@ findFood l =
                 (move (turn left) (randomMove $ goto l))
               $ findTrail l
 
- 
+
 findTrail :: (MonadFix m, Label l) => l -> AntT m l ()
 findTrail l =
-  if' (ahead :=: foodMarker) 
+  if' (ahead :=: foodMarker)
       (markHome >> (move (goto l) (randomMove $ goto l)))
     $ if' (rightAhead :=: foodMarker)
           (move (turn right) (turn right))
@@ -112,10 +112,10 @@ findTrail l =
               (move (turn left) (turn left))
               (move (goto l) (randomMove $ goto l))
 
-  
-findHome :: (MonadFix m, Label l) => l -> AntT m l ()  
-findHome l = 
-      if' (ahead :=: home) 
+
+findHome :: (MonadFix m, Label l) => l -> AntT m l ()
+findHome l =
+      if' (ahead :=: home)
           (markFood >> (move (goto l) (goto l)))
         $ if' (rightAhead :=: home)
               (markFood >> (move (turn right) (turn right)))
@@ -127,9 +127,9 @@ findHome l =
 findHomeMarker :: (MonadFix m, Label l) => l -> AntT m l ()
 findHomeMarker l = mdo
   markFood
-  if' (here :=: homeMarker) 
+  if' (here :=: homeMarker)
       unmarkHome
-      $ if' (ahead :=: homeMarker) 
+      $ if' (ahead :=: homeMarker)
           ((move (goto l) (goto l)))
         $ if' (rightAhead :=: homeMarker)
                (move (turn right) (turn right))
@@ -138,7 +138,7 @@ findHomeMarker l = mdo
                 (move (goto l) (goto l))
 
 
---Marker 2 is placed when you find food in a regular way. It could also happen that you kill an ant. 
+--Marker 2 is placed when you find food in a regular way. It could also happen that you kill an ant.
 --In this case you should just loook for the closest home marker and return to the base
 findMarker2 :: (MonadFix m, Label l) => l -> AntT m l ()
 findMarker2 l = mdo
@@ -148,7 +148,7 @@ findMarker2 l = mdo
   if' (ahead :=: marker two) (move (goto l) (goto l)) (turn right >> findHomeMarker l)
 
 dropFood' :: (MonadFix m, Label l) => l -> AntT m l ()
-dropFood' l = mdo 
+dropFood' l = mdo
   drop'
   turn left
   turn left

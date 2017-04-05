@@ -8,107 +8,189 @@ subtitle: Amazing ants!
 theme: uucs
 mainfont: Ubuntu Light
 sansfont: Ubuntu Light
----
-
-Please use Markdown to write your slides. 
-
-This makes sure that slides will be consistent -- and easy for me to
-edit in the future.
-
----
-
-Start a new slide with by beginning a new line three dashes `---`.
-
-For example:
-
-```
----
-
-My contents
-
----
-```
-
+header-includes:
+  - \usepackage{smartdiagram}
 ---
 
 # Overview
 
 * Architecture
-* are pretty easy
 * Optimizations
 * Testing
 
 ---
 
-# Architecture
+# Architecture of the EDSL
 
-slease include any images in the `img` subdirectory.
-
-You can refer to images using the usual markdown syntax:
-
-![My caption](img/uueduc.jpg "Alt caption"){ width=30% }
+\smartdiagram[descriptive diagram]{
+  {Abstractions,{Higher-order combinators, while, if, etc
+                 and a Bool-like expression language}},
+  {Monad, {AntT and basic combinators, move, drop, etc}},
+  {Base , {(AntState, Instruction) }}}
 
 ---
 
-# DSL
+# Internals (I) (Ant/Monad.hs)
 
 ```haskell
-newtype AntT m l a = AntT { runAnt :: TardisT (Program l) l m a
+import           Control.Monad.Tardis
+
+newtype AntT m l a =
+  AntT { runAnt :: TardisT (Program l) l m a }
+```
+
+> A Tardis is the combination of the State monad transformer and the Reverse State monad transformer.
+
+```haskell
+instance MonadFix m => Monad (TardisT bw fw m)
+  ...
 ```
 
 ---
 
-# How does it works?
 
----
+# Internals (II) (Ant/Monad.hs)
 
-# Abstractions over AntT
+```haskell
+data Program l =
+  Program { _entry     :: l
+          , _commands  :: Map l (Command l) }
 
----
+goto :: MonadFix m  => l -> AntT m l ()
+goto = ...
 
-# Making slides
-
-I've included a Makefile to build slides.
-
-You will need to have the Haskell tool `pandoc` installed:
-
+label :: MonadFix m => AntT m l l
+label = ...
 ```
-> cabal install pandoc
-> make
+
+---
+
+# Example
+
+```haskell
+{-# LANGUAGE RecursiveDo #-}
+
+prog1 :: (MonadFix m, Label l)
+      => AntT m l ()
+prog1 = mdo
+  l <- label
+  turn left
+  goto l
 ```
----
-
-# Working with markdown
-
-You may want to install the markdown mode for emacs (or some other
-editor of choice).
-
-I've included some file local variables at the bottom of this file --
-you may find them useful.
 
 ---
 
-# Inline latex
+# Abstractions over AntT (Abstractions.hs)
 
-You can always use \emph{inline} \LaTeX commands if you want.
+```haskell
+loop :: MonadFix m
+     => (AntT m l () -> AntT m l () -> AntT m l a)
+     -> AntT m l ()
+loop cmds = mdo
+    cont <- label
+    cmds (goto cont) (goto brk)
+    goto cont
+    brk <- label
+    return ()
+```
 
-But try to avoid this if you can.
+---
 
-Most Markdown commands should suffice.
+# Genetic (I) (Genetic/Evolve.hs)
 
-\LaTeX is useful for formula's
+---
 
-\begin{equation}
-\tau + x = \sigma
-\end{equation}
+# Optimizations (I) (Ant/Optimizations.hs)
 
-Or inline formulas, enclosed in dollar symbols like so $\tau + x$.
+The size of generated programs is huge, consider:
+
+```haskell
+move (goto p_label) (goto p_label)
+p_label <- label <* p
+```
+versus
+
+```haskell
+move p p
+```
+
+
+---
+
+# Optimizations (II) (Ant/Optimizations.hs)
+
+We define a optimization as:
+```haskell
+newtype Opt l1 l2 =
+  Opt { unOpt :: Program l1 -> Program l2 }
+
+type Optimization l = Opt l l
+
+instance C.Category Opt where
+
+applyOpt :: Optimization l -> Program l -> Program l
+```
+. . .
+And we have implemented a couple of them:
+```haskell
+unreachableOpt   :: Label l => Optimization l
+duplicateCodeOpt :: Label l => Optimization l
+```
+
+---
+
+# Testing (I) (test/Spec.hs)
+
+How do we know that the optimizations do not change the `intended`
+behaviour of a program?
+
+At least the `optimised` program should be valid ...
+
+. . .
+
+> QuickCheck!
+
+. . .
+```haskell
+testOptimization :: Op -> AntMTest L -> Bool
+testOptimization opt antm =
+  valid $ applyOpt (toOptimization opt)
+                   (compileProg (toAntM antm))
+```
+
+. . .
+
+But we could do better, and we do!
+
+---
+
+# Testing (I) (test/Spec.hs)
+
+```haskell
+test :: Int -> Int -> AntMTest L -> Op -> Property
+test r seed cprog opt = do
+  gs1  <- run $
+    initGameState seed tinyWorld
+        (toCmds cprog)
+        blackInstr
+    >>= runNRounds r
+  gs2  <- run $
+    initGameState seed tinyWorld
+        (toCmds $ applyOpt
+                  (toOptimization opt)
+                  cprog)
+        blackInstr
+    >>= runNRounds r
+  run (gs1 =~= gs2)
+```
 
 ---
 
 # Questions
 
-If you can't get things to work, don't hesitate to get in touch!
+Thank **you** for your **attention**!
+
+Any Questions?
 
 
 <!-- Local Variables:  -->
