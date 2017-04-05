@@ -59,6 +59,14 @@ searchForFood = do
     (cross left right)
     (cross right left)
 
+searchForFood2 :: (MonadFix m, Label l) => AntT m l ()
+searchForFood2 = do
+  search Nothing food
+  doOnTheDir food
+    (redo move_)
+    (cross left right)
+    (cross right left)
+
 
 cross :: (MonadFix m, Label l) => LeftOrRight -> LeftOrRight -> AntT m l ()
 cross d1 d2 = do turn d1
@@ -69,6 +77,7 @@ cross d1 d2 = do turn d1
 
 followTrail :: (MonadFix m, Label l) => AntT m l ()
 followTrail = do
+  _trail <- label
   while ((ahead :=: marker zero) :|: (leftAhead :=: marker zero)  :|: (rightAhead :=: marker zero)) 
         (doOnTheDir (marker zero)
                            (redo move_)
@@ -76,7 +85,9 @@ followTrail = do
                            (cross right left))
   if' (ahead :=: food)
       bringFood
-      ((for 2 $ turn left) >> clearTrail zero >> searchForFood)
+    $ if' (ahead :=: home) 
+          ((for 2 $ turn left) >> goto _trail)
+          ((for 2 $ turn left) >> clearTrail zero >> searchForFood)
 
 
 clearTrail :: (MonadFix m, Label l) => Marker -> AntT m l ()
