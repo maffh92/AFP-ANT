@@ -6,8 +6,8 @@ author: Martijn Fleuren
 title: Ants
 subtitle: Amazing ants!
 theme: uucs
-mainfont: Ubuntu Light
-sansfont: Ubuntu Light
+# mainfont: Ubuntu Light
+# sansfont: Ubuntu Light
 header-includes:
   - \usepackage{smartdiagram}
 ---
@@ -97,6 +97,61 @@ loop cmds = mdo
 ---
 
 # Genetic (I) (Genetic/Evolve.hs)
+
+* Instead of thinking deep about how to write a strategy ...
+
+---
+
+# Genetic (I) (Genetic/Evolve.hs)
+
+* Instead of thinking deep about how to write a strategy, let a computer do the
+  searching for you.
+* How to generate random programs?
+
+---
+
+# Genetic (II) Meat of the search
+
+* QuickCheck has `generate :: Gen a -> IO a` to transfer random samples to `IO`
+* Use some kind of `max` function:
+
+```haskell
+evalP :: (Program, Fitness) -> Program -> IO (Program, Fitness)
+evalP (prog1, fit1) prog2 = do
+  fit2 <- fitness prog2
+
+  return $ case fit1 `compare` fit2 of
+    LT -> (prog2, fit2)
+    _  -> (prog1, fit1) -- Also for EQ! y? idk. dm.
+```
+
+---
+
+# Genetic (II) Meat of the search ctd
+
+* Then, fold some container over this max function
+
+```haskell
+search :: Int -> IO Program
+search n = do
+  prog1 <- newProgram
+  fit1  <- fitness prog1
+  xs    <- generate n - 1 programs
+
+  (best,_) <- foldM evalP (prog1, fit1) xs
+```
+
+---
+
+# Genetic (III) Results
+
+* Benchmark against the winner of ICFP2004 lightning division
+* None of the programs obtained a score >0
+  - There is no meaningful way to tune a random program
+  - possible solution: write small programs and compose them randomly
+    (attempted, not finished)
+
+* Brute force random search is _not a good idea_
 
 ---
 
