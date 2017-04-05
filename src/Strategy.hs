@@ -33,7 +33,20 @@ strategies =
 -}
 
 strategy :: (MonadFix m, Label l) => AntT m l ()
-strategy = frequency [(20,killer) ,(80, bringFood), (20, forever guardFood)]
+strategy =
+  frequency [ (8, forever searchForFood )
+            , (2, highWayMakers)]
+
+highWayMakers :: (MonadFix m, Label l)
+         => AntT m l ()
+highWayMakers =
+  choose [ makeHighway zero rock home []
+         , makeHighway zero rock home [left, left, left]
+         , makeHighway one rock home [right]
+         , makeHighway one rock home [left, left]
+         , makeHighway two rock home [right, right]
+         , makeHighway two rock home [left]
+         ]
 
 killer :: (MonadFix m, Label l) => AntT m l ()
 killer =
@@ -45,19 +58,124 @@ bringFood = do
   pickup_ searchForFood
   for 3 $ turn left
   search  (Just zero) home
-  redo move_
+  moveAs home
   drop'
   for 2 $ turn left
   redo move_
   followTrail
 
-searchForFood :: (MonadFix m, Label l) => AntT m l ()
-searchForFood = do
-  search Nothing food
-  doOnTheDir food
+moveAs :: (MonadFix m, Label l)
+       => Condition
+       -> AntT m l ()
+moveAs c =
+  doOnTheDir c
     (redo move_)
     (cross left right)
     (cross right left)
+    where
+      cross d1 d2 = do turn d1
+                       redo move_
+                       turn d2
+                       redo move_
+
+guardFood :: (MonadFix m, Label l) => AntT m l ()
+guardFood = do
+  mark one
+  redo move_
+  search Nothing (marker one)
+
+
+makeHighway :: (MonadFix m, Label l)
+            => Marker
+            -> Condition
+            -> Condition
+            -> [LeftOrRight]
+            -> AntT m l ()
+makeHighway m c1 c2 dirs = do
+  mapM_ turn dirs
+  forever $ do
+    doWhile c1
+    turnAll
+    doWhile c2
+    turnAll
+    where
+      doWhile c =
+        while (Not (ahead :=: c) :&: Not (ahead :=: friend)) $ do
+          move_ avoid
+          mark m
+
+turnAll :: (MonadFix m, Label l) => AntT m l ()
+turnAll = for 3 (turn left)
+
+avoid :: (MonadFix m, Label l) => AntT m l ()
+avoid = do
+  l <- label
+  choose [escape l left right, escape l right left, nop]
+  where
+    escape l d1 d2 = do
+      turn d1
+      move (turnAll >> move_ (goto l) >> turnAll >> turn d2)
+           (turn d2)
+
+
+searchForFood :: (MonadFix m, Label l) => AntT m l ()
+searchForFood = do
+  s <- label
+  search Nothing food
+  moveAs food
+  pickup_ (goto s)
+
+  while (Not (   ahead :=: marker zero
+             :|: ahead :=: marker one
+             :|: ahead :=: marker two)) $ do
+    try 2 move turnRandom
+    flip_ 20 turnRandom
+
+  caseM [ (ahead :=: marker zero, if' (rightAhead :=: marker zero)
+                                      (redo move_ >> turn left)
+                                      (redo move_ >> turn right))
+        , (ahead :=: marker one, if' (rightAhead :=: marker one)
+                                      (redo move_ >> turn left)
+                                      (redo move_ >> turn right))
+        , (ahead :=: marker two, if' (rightAhead :=: marker two)
+                                      (redo move_ >> turn left)
+                                      (redo move_ >> turn right))]
+
+  l <- label <* while (Not (ahead :=: rock) :&: Not (ahead :=: home))
+                      (move_ avoid)
+
+  if' (ahead :=: home)
+      (move_ avoid >> drop')
+      (move_ avoid >> turnAll >> goto l)
+
+guardHome :: (MonadFix m, Label l) => AntT m l ()
+guardHome = do
+  search Nothing rock
+  search Nothing home
+  forever $ do
+    mark one
+    choose [twice left, twice right]
+    search Nothing (marker one)
+      where twice d = turn d >> turn d
+
+-- markFood,homeMarker :: Marker
+markFood :: (MonadFix m, Label l) => AntT m l ()
+markFood = mark zero
+
+unmarkFood :: (MonadFix m, Label l) => AntT m l ()
+unmarkFood = unmark zero
+
+foodMarker :: Condition
+foodMarker = marker zero
+
+markHome :: (MonadFix m, Label l) => AntT m l ()
+markHome = mark one
+
+homeMarker :: Condition
+homeMarker = marker one
+
+unmarkHome :: (MonadFix m, Label l) => AntT m l ()
+unmarkHome = unmark one
 
 searchForFood2 :: (MonadFix m, Label l) => l -> AntT m l ()
 searchForFood2 l = do
@@ -109,33 +227,6 @@ clearTrail m  = do
                      (cross left right)
                      (cross right left)
         )
-
-
-
-guardFood :: (MonadFix m, Label l) => AntT m l ()
-guardFood = do
-  mark one
-  redo move_
-  search Nothing (marker one)
-
--- markFood,homeMarker :: Marker
-markFood :: (MonadFix m, Label l) => AntT m l ()
-markFood = mark zero
-
-unmarkFood :: (MonadFix m, Label l) => AntT m l ()
-unmarkFood = unmark zero
-
-foodMarker :: Condition
-foodMarker = marker zero
-
-markHome :: (MonadFix m, Label l) => AntT m l ()
-markHome = mark one
-
-homeMarker :: Condition
-homeMarker = marker one
-
-unmarkHome :: (MonadFix m, Label l) => AntT m l ()
-unmarkHome = unmark one
 
 
 
