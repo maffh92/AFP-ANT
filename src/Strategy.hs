@@ -85,9 +85,9 @@ clearTrail m  = do
         ( do
           unmark m
           doOnTheDir (marker m)
-                           (redo move_)
-                           (cross left right)
-                           (cross right left)
+                     (redo move_)
+                     (cross left right)
+                     (cross right left)
         )
 
 
