@@ -21,11 +21,6 @@ module Ant.Monad
   , flip'
   , sense
   , pickup
-  -- ** Continuous version of Branching commands.
-  , move_
-  , flip_
-  , sense_
-  , pickup_
   -- * Program
   , Program
   , commands
@@ -172,12 +167,6 @@ singleCmd :: (MonadFix m, Label l)
 singleCmd cmd =
   branchingCmd (const . cmd) (return ()) (return ())
 
-noBranchingCmd :: (MonadFix m, Label l)
-               => (l -> l -> Command l)
-               -> AntT m l ()
-               -> AntT m l ()
-noBranchingCmd cmd = branchingCmd cmd (return ())
-
 --------------------------------------------------------------------------------
 -- Non branching commands
 
@@ -222,30 +211,3 @@ flip' :: (MonadFix m, Label l)
      -> AntT m l () -- ^ Failure
      -> AntT m l ()
 flip' n = branchingCmd (Flip n)
-
---------------------------------------------------------------------------------
--- Branching commands that only branch in one argument.
--- Only branch in case of failure.
-
-move_ :: (MonadFix m, Label l)
-      => AntT m l () -- ^ Failure
-      -> AntT m l ()
-move_ = noBranchingCmd Move
-
-pickup_ :: (MonadFix m, Label l)
-        => AntT m l () -- ^ Failure
-        -> AntT m l ()
-pickup_ = noBranchingCmd PickUp
-
-sense_ :: (MonadFix m, Label l)
-       => SenseDir
-       -> Condition
-       -> AntT m l () -- ^ Failure
-       -> AntT m l ()
-sense_ c s' = noBranchingCmd (\su fa -> Sense c su fa s')
-
-flip_ :: (MonadFix m, Label l)
-      => Int
-      -> AntT m l () -- ^ Failure
-      -> AntT m l ()
-flip_ n = noBranchingCmd (Flip n)

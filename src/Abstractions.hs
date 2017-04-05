@@ -78,26 +78,41 @@ nop = cont (flip_ 1 . goto)
 
 -- | Do nothing for @n@ times.
 nops :: (MonadFix m, Label l)  => Int -> AntT m l ()
-nops n = replicateM_ n nop
+nops n = for n nop
 
-
--- | Do an
+-- | Do an action forever.
 forever :: (Label l, MonadFix m) => AntT m l a -> AntT m l ()
 forever = while T
 
 -- | While condition is met, run code
-while :: (MonadFix m, Label l) => SenseTest -> AntT m l a -> AntT m l ()
-while cond code = loop (\cont brk -> if' cond (code >> cont) brk)
+while :: (MonadFix m, Label l)
+      => SenseTest
+      -> AntT m l a
+      -> AntT m l ()
+while cond code = loop (\c brk -> if' cond (code >> c) brk)
 
 -- | Look until we can find what we are looking for.
 -- leave a mark on the way.
 search :: (MonadFix m, Label l)
-       => Marker
+       => Maybe Marker
        -> Condition
        -> AntT m l ()
 search m cond =
-  while (Not (ahead :=: cond)) $
-    choose [for 5 (redo move_ >> mark m >> turnRandom), turnRandom]
+  while (Not (ahead :=: cond)) $ do
+    try 2 move turnRandom
+    maybe (return ()) mark m
+    flip_ 15 turnRandom
+
+-- | Try an action @n@ times, and continue.
+try :: (MonadFix m, Label l)
+    => Int
+    -> (AntT m l () -> AntT m l () -> AntT m l ())
+    -> AntT m l ()
+    -> AntT m l ()
+try n m f = mdo
+  for n (m (goto l) f)
+  l <- label
+  return ()
 
 -- | Investigate the environment and branch accordingly
 if' :: (MonadFix m, Label l) => SenseTest -> AntT m l () -> AntT m l () -> AntT m l ()
@@ -121,3 +136,42 @@ optimizeBranches b1 b2 main = mdo
     return val
 
 
+
+--------------------------------------------------------------------------------
+  -- Other combinators
+
+-- | Try to move, if fail do something else
+move_ :: (MonadFix m, Label l)
+      => AntT m l () -- ^ Failure
+      -> AntT m l ()
+move_ = move (return ())
+
+-- | Move always
+move__ :: (MonadFix m, Label l)
+       => AntT m l ()
+move__ = move (return ()) (return ())
+
+-- | Try to pickup, if fail do something else
+pickup_ :: (MonadFix m, Label l)
+        => AntT m l () -- ^ Failure
+        -> AntT m l ()
+pickup_ = pickup (return ())
+
+-- | Pickup always
+pickup__ :: (MonadFix m, Label l)
+         => AntT m l ()
+pickup__ = pickup (return ()) (return ())
+
+sense_ :: (MonadFix m, Label l)
+       => SenseDir
+       -> Condition
+       -> AntT m l () -- ^ Failure
+       -> AntT m l ()
+sense_ c s' = sense c s' (return ())
+
+-- | flip and do something or just continue the flow.
+flip_ :: (MonadFix m, Label l)
+      => Int
+      -> AntT m l ()
+      -> AntT m l ()
+flip_ n m = flip' n m (return ())

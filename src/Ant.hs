@@ -35,6 +35,7 @@ module Ant
   -- ** Code generation
   , compile
   , compileProg
+  , compileToFile
   ) where
 
 import           Ant.Base
@@ -45,6 +46,9 @@ import           Data.Map     (toList)
 
 compile :: AntM L () -> String
 compile = showCmds . toList . view commands . compileProg
+
+compileToFile :: FilePath -> AntM L () -> IO ()
+compileToFile path = writeFile path . compile
 
 compileProg :: AntM L () -> Program L
 compileProg = fst . snd . runAntM z

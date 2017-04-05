@@ -32,6 +32,15 @@ strategies =
   ]
 -}
 
+strategy :: (MonadFix m, Label l) => AntT m l ()
+strategy = do
+  search Nothing food
+  move__
+  pickup__
+  search (Just zero) home
+  move__
+  drop'
+
 -- markFood,homeMarker :: Marker
 markFood :: (MonadFix m, Label l) => AntT m l ()
 markFood = mark zero
@@ -160,17 +169,6 @@ randomMove ::
   AntT m l () ->
   AntT m l ()
 randomMove _next = flip' 3 (turn left) (turn right) >> move _next _next
-
-
--- | Look until we can find what we are looking for.
--- leave a mark on the way.
-search' :: (MonadFix m, Label l)
-        => Marker
-        -> Condition
-        -> AntT m l ()
-search' marker cond =
-  while (Not (ahead :=: cond)) $
-    choose [for 5 (redo move_ >> mark marker >> turnRandom), turnRandom]
 
 --The below functions are not used anymore. It was part of the old strategy. Both of the strategy actaully do not work.
 -- -----------------------------------------------
