@@ -69,15 +69,27 @@ cross d1 d2 = do turn d1
 
 followTrail :: (MonadFix m, Label l) => AntT m l ()
 followTrail = do
-  _trail <- label
-  search Nothing (marker zero)
-  doOnTheDir (marker zero)
-    (redo move_)
-    (cross left right)
-    (cross right left)
+  while ((ahead :=: marker zero) :|: (leftAhead :=: marker zero)  :|: (rightAhead :=: marker zero)) 
+        (doOnTheDir (marker zero)
+                           (redo move_)
+                           (cross left right)
+                           (cross right left))
   if' (ahead :=: food)
-      (goto _trail)
       bringFood
+      ((for 2 $ turn left) >> clearTrail zero >> searchForFood)
+
+
+clearTrail :: (MonadFix m, Label l) => Marker -> AntT m l ()
+clearTrail m  = do
+  while ((ahead :=: (marker m)) :|: (leftAhead :=: (marker m))  :|: (rightAhead :=: (marker m))) 
+        ( do
+          unmark m
+          doOnTheDir (marker m)
+                           (redo move_)
+                           (cross left right)
+                           (cross right left)
+        )
+
 
 
 guardFood :: (MonadFix m, Label l) => AntT m l ()
