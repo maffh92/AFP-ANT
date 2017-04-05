@@ -22,13 +22,6 @@ loop cmd = mdo
 redo :: MonadFix m => (AntT m l () -> AntT m l a) -> AntT m l ()
 redo cmd = loop (\ct brk -> cmd ct >> brk)
 
--- |Select one of the programs uniformly at random and run it
-choose :: (Label l, MonadFix m) => [AntT m l a] -> AntT m l ()
-choose cmds = loop (\cont brk -> choose' brk cmds >> brk)
- where
-    choose' _   []          = return ()
-    choose' end [cmd]       = cmd >> end
-    choose' end (cmd:cmds)  = flip' (length cmds+1) (cmd >> end) (choose' end cmds)
 
 -- | Turn randomly to either left or right.
 turnRandom :: (Label l, MonadFix m) => AntT m l ()
@@ -88,11 +81,7 @@ search m cond = do
     try 2 move turnRandom
     maybe (return ()) mark m
     flip_ 15 turnRandom
-  if' (ahead :=: cond)
-      (redo move_) $
-      if' (leftAhead :=: cond)
-          (turn left  >> redo move_)
-          (turn right >> redo move_)
+
 
 
 -- | Try an action @n@ times, and continue.
@@ -128,7 +117,37 @@ optimizeBranches b1 b2 main = mdo
     return val
 
 
--- | 
+--------------------------------------------------------------------------------
+  -- Conditional combinators
+
+actOnCond :: (MonadFix m, Label l)
+          => [(SenseTest , AntT m l ())]
+          -> AntT m l ()
+actOnCond = foldr (uncurry if') (return ())
+
+doOnTheDir ::(MonadFix m, Label l)
+           =>  Condition
+           -> AntT m l ()
+           -> AntT m l ()
+           -> AntT m l ()
+           -> AntT m l ()
+doOnTheDir cond ah le ri =
+  actOnCond [( ahead      :=: cond, ah)
+            ,( leftAhead  :=: cond, le)
+            ,( rightAhead :=: cond, ri)]
+
+--------------------------------------------------------------------------------
+  -- Randomness combinators
+
+-- |Select one of the programs uniformly at random and run it
+choose :: (Label l, MonadFix m) => [AntT m l a] -> AntT m l ()
+choose cmds = loop (\cont brk -> choose' brk cmds >> brk)
+ where
+    choose' _   []          = return ()
+    choose' end [cmd]       = cmd >> end
+    choose' end (cmd:cmds)  = flip' (length cmds+1) (cmd >> end) (choose' end cmds)
+
+-- |
 frequency :: (MonadFix m, Label l)
           => [(Int, AntT m l ())]
           -> AntT m l ()

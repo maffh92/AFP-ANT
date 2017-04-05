@@ -36,17 +36,30 @@ strategy :: (MonadFix m, Label l) => AntT m l ()
 strategy = choose [killer , bringFood]
 
 killer :: (MonadFix m, Label l) => AntT m l ()
-killer = search Nothing foe
+killer =
+  search Nothing foe
 
 bringFood :: (MonadFix m, Label l) => AntT m l ()
 bringFood = do
-  search Nothing food
-  redo move_
-  pickup_ (search Nothing food)
+  searchForFood
+  pickup_ searchForFood
   for 3 $ turn left
   search  (Just zero) home
   redo move_
   drop'
+
+searchForFood :: (MonadFix m, Label l) => AntT m l ()
+searchForFood = do
+  search Nothing food
+  doOnTheDir food
+    (redo move_)
+    (cross left right)
+    (cross right left)
+    where
+      cross d1 d2 = do turn d1
+                       redo move_
+                       turn d2
+                       redo move_
 
 -- markFood,homeMarker :: Marker
 markFood :: (MonadFix m, Label l) => AntT m l ()
