@@ -3,7 +3,7 @@
 module Abstractions where
 
 import           Ant
-import           Control.Monad
+import           Control.Monad hiding (forever)
 import           Control.Monad.Fix
 
 -- |Loop. Inner program gets two arguments, the first one is a 'continue' command
@@ -22,10 +22,6 @@ loop cmd = mdo
 redo :: MonadFix m => (AntT m l () -> AntT m l a) -> AntT m l ()
 redo cmd = loop (\ct brk -> cmd ct >> brk)
 
-
--- | Turn randomly to either left or right.
-turnRandom :: (Label l, MonadFix m) => AntT m l ()
-turnRandom = choose [turn left, turn right]
 
 for :: (Label l, MonadFix m) => Int -> AntT m l () -> AntT m l ()
 for = replicateM_
@@ -139,7 +135,7 @@ doOnTheDir cond ah le ri =
 --------------------------------------------------------------------------------
   -- Randomness combinators
 
--- |Select one of the programs uniformly at random and run it
+-- | Select one of the programs uniformly at random and run it
 choose :: (Label l, MonadFix m) => [AntT m l a] -> AntT m l ()
 choose cmds = loop (\cont brk -> choose' brk cmds >> brk)
  where
@@ -147,11 +143,16 @@ choose cmds = loop (\cont brk -> choose' brk cmds >> brk)
     choose' end [cmd]       = cmd >> end
     choose' end (cmd:cmds)  = flip' (length cmds+1) (cmd >> end) (choose' end cmds)
 
--- |
+-- | Select a program to run according to its total weight
 frequency :: (MonadFix m, Label l)
           => [(Int, AntT m l ())]
           -> AntT m l ()
-frequency = undefined
+frequency xs =
+  choose (concatMap (uncurry replicate) xs)
+
+-- | Turn randomly to either left or right.
+turnRandom :: (Label l, MonadFix m) => AntT m l ()
+turnRandom = choose [turn left, turn right]
 
 --------------------------------------------------------------------------------
   -- Other combinators

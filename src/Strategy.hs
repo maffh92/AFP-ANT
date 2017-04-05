@@ -33,7 +33,7 @@ strategies =
 -}
 
 strategy :: (MonadFix m, Label l) => AntT m l ()
-strategy = choose [killer , bringFood]
+strategy = frequency [(20,killer) ,(80, bringFood), (20, forever guardFood)]
 
 killer :: (MonadFix m, Label l) => AntT m l ()
 killer =
@@ -60,6 +60,12 @@ searchForFood = do
                        redo move_
                        turn d2
                        redo move_
+
+guardFood :: (MonadFix m, Label l) => AntT m l ()
+guardFood = do
+  mark one
+  redo move_
+  search Nothing (marker one)
 
 -- markFood,homeMarker :: Marker
 markFood :: (MonadFix m, Label l) => AntT m l ()
