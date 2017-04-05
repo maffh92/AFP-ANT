@@ -1,33 +1,19 @@
 {-# LANGUAGE RecursiveDo #-}
 
 module Abstractions where
-import Control.Monad.Fix
-import Control.Monad
-import Ant
 
-abstr_test :: (Label l, MonadFix m) => AntT m l ()
-abstr_test = mdo
-    loop (\cont brk -> mdo
-        search ahead food (\exc -> move_ exc >> pickup_ exc)
-        search ahead home (\exc -> move_ exc >> drop')
-     )
- where
-
-    search dir what whenFound = loop (\continue break -> mdo
-        sense dir what (whenFound continue >> break) (moveAnyDir >> continue)
-     )
-
-    moveAnyDir = redo (\exc -> choose [turn left, turn right, move_ exc])
-
-
-
+import           Ant
+import           Control.Monad
+import           Control.Monad.Fix
 
 -- |Loop. Inner program gets two arguments, the first one is a 'continue' command
 -- |and the second one is a 'break' command.
-loop :: MonadFix m => (AntT m l () -> AntT m l () -> AntT m l a) -> AntT m l ()
-loop cmds = mdo
+loop :: MonadFix m
+     => (AntT m l () -> AntT m l () -> AntT m l ())
+     -> AntT m l ()
+loop cmd = mdo
     cont <- label
-    cmds (goto cont) (goto brk)
+    cmd (goto cont) (goto brk)
     goto cont
     brk <- label
     return ()
@@ -97,11 +83,17 @@ search :: (MonadFix m, Label l)
        => Maybe Marker
        -> Condition
        -> AntT m l ()
-search m cond =
-  while (Not (ahead :=: cond)) $ do
+search m cond = do
+  while (Not (ahead :=: cond :|: leftAhead :=: cond :|: rightAhead :=: cond)) $ do
     try 2 move turnRandom
     maybe (return ()) mark m
     flip_ 15 turnRandom
+  if' (ahead :=: cond)
+      (redo move_) $
+      if' (leftAhead :=: cond)
+          (turn left  >> redo move_)
+          (turn right >> redo move_)
+
 
 -- | Try an action @n@ times, and continue.
 try :: (MonadFix m, Label l)
@@ -136,6 +128,11 @@ optimizeBranches b1 b2 main = mdo
     return val
 
 
+-- | 
+frequency :: (MonadFix m, Label l)
+          => [(Int, AntT m l ())]
+          -> AntT m l ()
+frequency = undefined
 
 --------------------------------------------------------------------------------
   -- Other combinators

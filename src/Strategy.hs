@@ -35,10 +35,11 @@ strategies =
 strategy :: (MonadFix m, Label l) => AntT m l ()
 strategy = do
   search Nothing food
-  move__
-  pickup__
-  search (Just zero) home
-  move__
+  redo move_
+  pickup_ (search Nothing food)
+  for 3 $ turn left
+  search  (Just zero) home
+  redo move_
   drop'
 
 -- markFood,homeMarker :: Marker
