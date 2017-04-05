@@ -49,6 +49,7 @@ bringFood = do
   drop'
   for 2 $ turn left
   redo move_
+  followTrail
 
 searchForFood :: (MonadFix m, Label l) => AntT m l ()
 searchForFood = do
