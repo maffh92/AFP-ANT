@@ -35,7 +35,8 @@ strategies =
 strategy :: (MonadFix m, Label l) => AntT m l ()
 strategy =
   frequency [ (8, forever searchForFood )
-            , (2, highWayMakers)]
+            , (2, highWayMakers)
+            , (5, bringFood)]
 
 highWayMakers :: (MonadFix m, Label l)
          => AntT m l ()
