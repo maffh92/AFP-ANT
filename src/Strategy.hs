@@ -66,12 +66,11 @@ cross d1 d2 = do turn d1
                  redo move_
 
 
-
 followTrail :: (MonadFix m, Label l) => AntT m l ()
 followTrail = do
   _trail <- label
   search Nothing (marker zero)
-  doOnTheDir food
+  doOnTheDir (marker zero)
     (redo move_)
     (cross left right)
     (cross right left)
