@@ -55,15 +55,18 @@ killer =
 
 bringFood :: (MonadFix m, Label l) => AntT m l ()
 bringFood = do
-  searchForFood
-  pickup_ searchForFood
-  for 3 $ turn left
+  s <- label
+  search Nothing food
+  moveAs food
+  pickup_ (goto s)
+  for 2 $ turn left
   search  (Just zero) home
   moveAs home
   drop'
   for 2 $ turn left
   redo move_
-  followTrail
+  followTrail s
+  goto s
 
 moveAs :: (MonadFix m, Label l)
        => Condition
@@ -203,8 +206,8 @@ cross d1 d2 = do turn d1
                  redo move_
 
 
-followTrail :: (MonadFix m, Label l) => AntT m l ()
-followTrail = do
+followTrail :: (MonadFix m, Label l) => l -> AntT m l ()
+followTrail l = do
   _trail <- label
   while ((ahead :=: marker zero) :|: (leftAhead :=: marker zero)  :|: (rightAhead :=: marker zero)) 
         (doOnTheDir (marker zero)
@@ -212,7 +215,7 @@ followTrail = do
                            (cross left right)
                            (cross right left))
   if' (ahead :=: food)
-      bringFood
+      (goto l)
     $ if' (ahead :=: home) 
           ((for 2 $ turn left) >> goto _trail)
           ((for 2 $ turn left) >> clearTrail zero >> searchForFood2 _trail)
