@@ -7,7 +7,11 @@ import           Abstractions
 import           Ant
 import           Control.Monad.Fix
 
-
+-- The strategy function is used as the intitial start of our strategy.
+-- We use 4 different kinds of strategy. The idea is that we choose with a weighted probablity one of these strategy.
+-- The strategy with the highest weight it uses a highway to find food and return to th base
+-- The second highest just tries to find and return to the base.
+-- We have two strategies with the same weight. One of them tries to protect the food base and the other one creates the highway.
 strategy :: (MonadFix m, Label l) => AntT m l ()
 strategy =
   frequency [ (8, forever searchForFood )
@@ -42,19 +46,6 @@ bringFood = do
   followTrail s
   goto s
 
-moveAs :: (MonadFix m, Label l)
-       => Condition
-       -> AntT m l ()
-moveAs c =
-  doOnTheDir c
-    (redo move_)
-    (cross left right)
-    (cross right left)
-    where
-      cross d1 d2 = do turn d1
-                       redo move_
-                       turn d2
-                       redo move_
 
 guardFood :: (MonadFix m, Label l) => AntT m l ()
 guardFood = do
@@ -81,19 +72,6 @@ makeHighway m c1 c2 dirs = do
         while (Not (ahead :=: c) :&: Not (ahead :=: friend)) $ do
           move_ avoid
           mark m
-
-turnAll :: (MonadFix m, Label l) => AntT m l ()
-turnAll = for 3 (turn left)
-
-avoid :: (MonadFix m, Label l) => AntT m l ()
-avoid = do
-  l <- label
-  choose [escape l left right, escape l right left, nop]
-  where
-    escape l d1 d2 = do
-      turn d1
-      move (turnAll >> move_ (turnAll >> turn d2 >> goto l) >> turnAll >> turn d2)
-           (turn d2)
 
 
 searchForFood :: (MonadFix m, Label l) => AntT m l ()
