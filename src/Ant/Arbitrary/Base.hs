@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-{-| 
+{-|
 Module: Ant.Arbitrary.Base
 Description: Generate arbitrary ant programs using QuickCheck
 -}
@@ -12,11 +12,12 @@ import           Control.Monad          (replicateM)
 import           Generic.Random.Generic
 import           Prelude                hiding (id, (.))
 import           Test.QuickCheck
+import           Data.List              (foldl')
 
 import           Ant
 import           Ant.Base
 
--- | An AntMTest 
+-- | An AntMTest
 newtype AntMTest l = AntMTest { unAntMTest :: [Command l] }
                    deriving Show
 
@@ -49,7 +50,7 @@ genCommand lbs =
 
 -- | Make an AntMT from an AntMTest
 toAntM :: Label l => AntMTest l -> AntM l ()
-toAntM = foldl (\m -> (m >>) . interpret) (return ())
+toAntM = foldl' (\m -> (m >>) . interpret) (return ())
        . unAntMTest
 
 -- | Make an AntM out of a command
