@@ -1,4 +1,10 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
+
+{-| 
+Module: Ant.Arbitrary.Base
+Description: Generate arbitrary ant programs using QuickCheck
+-}
+
 module Ant.Arbitrary.Base where
 
 import           Control.Category
@@ -10,19 +16,23 @@ import           Test.QuickCheck
 import           Ant
 import           Ant.Base
 
+-- | An AntMTest 
 newtype AntMTest l = AntMTest { unAntMTest :: [Command l] }
                    deriving Show
 
+-- | An arbitrary label
 instance Label l => Arbitrary (AntMTest l) where
   arbitrary = do
     n <- (+1) <$> arbitrarySizedNatural
     AntMTest <$> genProgram n
 
+-- | Generate a program
 genProgram :: Label l => Int -> Gen [Command l]
 genProgram n =
   let lbs = take n (iterate su z)
   in  replicateM n (genCommand lbs)
 
+-- | Generate a command
 genCommand :: Label l => [l] -> Gen (Command l)
 genCommand lbs =
   oneof [ Mark   <$> arbitrary <*> genGoto
@@ -37,10 +47,12 @@ genCommand lbs =
   where
     genGoto = elements lbs
 
+-- | Make an AntMT from an AntMTest
 toAntM :: Label l => AntMTest l -> AntM l ()
 toAntM = foldl (\m -> (m >>) . interpret) (return ())
        . unAntMTest
 
+-- | Make an AntM out of a command
 interpret :: Label l => Command l -> AntM l ()
 interpret cmd =
   case cmd of
@@ -54,15 +66,20 @@ interpret cmd =
     Flip toss l1 l2 ->  flip' toss (goto l1) (goto l2)
 
 -- Arbitrary instances for everything
+
+-- | Arbitrary instance for SenseDir
 instance Arbitrary SenseDir where
   arbitrary = genericArbitrary uniform
 
+-- | Arbitrary instance for Condition
 instance Arbitrary Condition where
   arbitrary = genericArbitrary uniform
 
+-- | Arbitrary instance for Marker
 instance Arbitrary Marker where
   arbitrary = genericArbitrary uniform
 
+-- | Arbitrary instance for LeftOrRight
 instance Arbitrary LeftOrRight where
   arbitrary = genericArbitrary uniform
 
