@@ -1,4 +1,6 @@
-# This readme explains the structure of our ant project.
+# Amazing ants!
+
+## This readme explains the structure of our ant project.
 
 It is created by:
 Students:
@@ -8,12 +10,12 @@ Students:
 	Matthew Swart		     - 5597250
 
 
-# Building
+## Building
 
 For building the project we recommend to use `stack` but use `cabal` at your own
 risk.
 
-# Folder structure
+## Folder structure
 
 * test
 
