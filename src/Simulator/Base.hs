@@ -413,7 +413,7 @@ data FoodAdmin = FoodAdmin
    , redCarried   :: Int
    , remaining    :: Int
    , locations    :: S.Set Pos
-   } deriving Show
+   } deriving (Eq,Show)
 
 changeFoodAdmin :: (FoodAdmin -> FoodAdmin) -> Sim ()
 changeFoodAdmin f =

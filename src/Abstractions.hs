@@ -86,10 +86,6 @@ search m cond = do
     maybe (return ()) mark m
     flip_ 15 turnRandom
 
-
-
-
-
 -- | Try an action @n@ times, and continue.
 try :: (MonadFix m, Label l)
     => Int
@@ -111,7 +107,7 @@ if' (a :|: b) t f = optimizeBranches t f (\t' f' -> if' a t' (if' b t' f'))
 if' (Not cnd) t f = if' cnd f t
 
 -- | Generate optimized code for nested branches (note: not reentrant!)
-optimizeBranches :: (MonadFix m) => AntT m l a 
+optimizeBranches :: (MonadFix m) => AntT m l a
                                  -> AntT m l b
                                  -> (AntT m l () -> AntT m l () -> AntT m l c)
                                  -> AntT m l c
@@ -184,6 +180,7 @@ choose cmds = loop (\cont brk -> choose' brk cmds >> brk)
     choose' end (cmd:cmds)  = flip' (length cmds+1) (cmd >> end) (choose' end cmds)
 
 -- | Select a program to run according to its total weight
+-- moreless mirrors quickcheck frequency combinator.
 frequency :: (MonadFix m, Label l)
           => [(Int, AntT m l ())]
           -> AntT m l ()
