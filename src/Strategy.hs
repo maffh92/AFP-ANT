@@ -16,7 +16,7 @@ strategy :: (MonadFix m, Label l) => AntT m l ()
 strategy =
   frequency [ (8, forever searchForFood )
             , (2, highWayMakers)
-            , (2, forever $ search Nothing foeHome >> searchForFood)
+            , (2, stealFood)
             , (5, bringFood)]
 
 highWayMakers :: (MonadFix m, Label l)
@@ -30,6 +30,9 @@ highWayMakers =
     , makeHighway two rock home [right, right]
     , makeHighway two rock home [left]
     ]
+
+stealFood :: (MonadFix m, Label l) => AntT m l ()
+stealFood = forever $ search Nothing foeHome >> searchForFood
 
 bringFood :: (MonadFix m, Label l) => AntT m l ()
 bringFood = do
