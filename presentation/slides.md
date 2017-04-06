@@ -84,15 +84,19 @@ prog1 = mdo
 # Abstractions over AntT (Abstractions.hs)
 
 ```haskell
-loop :: MonadFix m
-     => (AntT m l () -> AntT m l () -> AntT m l a)
-     -> AntT m l ()
-loop cmds = mdo
-    cont <- label
-    cmds (goto cont) (goto brk)
-    goto cont
-    brk <- label
-    return ()
+-- | Look until we can find what we are looking for.
+-- leave a mark on the way.
+search :: (MonadFix m, Label l)
+       => Maybe Marker
+       -> Condition
+       -> AntT m l ()
+search m cond = do
+  while (Not (ahead :=: cond     :|:
+              leftAhead :=: cond :|:
+              rightAhead :=: cond)) $ do
+    try 2 move turnRandom
+    maybe (return ()) mark m
+    flip_ 15 turnRandom
 ```
 
 ---
@@ -130,7 +134,7 @@ search n = do
 * Benchmark against the winner of ICFP2004 lightning division
 * None of the programs obtained a score >0
   - There is no meaningful way to tune a random program
-  - possible solution: write small programs and compose them randomly
+  - Possible solution: write small programs and compose them randomly
     (attempted, not finished)
 
 * Brute force random search is _not a good idea_
@@ -145,12 +149,11 @@ The size of generated programs is huge, consider:
 move (goto p_label) (goto p_label)
 p_label <- label <* p
 ```
-versus
+**versus**
 
 ```haskell
 move p p
 ```
-
 
 ---
 
@@ -223,12 +226,17 @@ test r seed cprog opt = do
 
 ---
 
-# Questions
+# Conclusions
 
-Thank **you** for your **attention**!
+* Making the EDSL was a lot of fun
+* But making good strategies even with a nice EDSL is hard
+* The Tardis monad is a very powerful abstraction for writing
+  assembly-like code
 
-Any Questions?
 
+__Thank **you** for your **attention**!__
+
+__Any Questions?__
 
 <!-- Local Variables:  -->
 <!-- pandoc/write: beamer -->
