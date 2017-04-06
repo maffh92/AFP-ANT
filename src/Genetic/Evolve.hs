@@ -17,6 +17,7 @@ import Simulator.Base
 import Strategy
 import Test.QuickCheck
 
+-- | Configuration object with lenses
 data GeneticConfig = GeneticConfig
   { _numRoundsPerGeneration :: Int -- Simulate this many rounds per program
   , _stopAfter              :: Int -- Stop search after this many generated programs
@@ -25,9 +26,12 @@ data GeneticConfig = GeneticConfig
 
 makeLenses ''GeneticConfig
 
+-- alias for documentation / readability
+type Fitness = Int
+
 defaultGeneticConfig = GeneticConfig
-  { _numRoundsPerGeneration = 10000
-  , _stopAfter              = 10
+  { _numRoundsPerGeneration = 100000
+  , _stopAfter              = 1000
   , _linesPerFile           = 10000
   }
 
@@ -35,30 +39,28 @@ defaultGeneticConfig = GeneticConfig
 newProgram :: Label l => Int -> IO [Command l]
 newProgram = generate . genProgram
 
-type Fitness = Int
-
+-- | Brute force random search for a program with a high score. Search generates
+-- a startpoint and its fitness, after which it will generate (N-1) other
+-- programs and compare it to the current best program. If to programs are equal
+-- in fitness, the eldest is kept.
 search :: GeneticConfig -> IO [Command L]
 search config =
-  do -- Generate the initial pair of (program, fitness)
-    prog      <- newProgram (view linesPerFile config)
-    worldF    <- readFile "../test-data/sample0.world"
-    blackProg <- readInstructions "../test-data/blackant.ant"
+  do prog1     <- newProgram (view linesPerFile config)
+     worldF    <- readFile "../test-data/sample0.world"
+     blackProg <- readInstructions "../test-data/blackant.ant"
 
-    _fitness <- fitness config worldF prog blackProg
-    let e = (prog, _fitness)
+     _fit1 <- fitness config worldF prog blackProg
+     let e = (prog1, _fit1)
 
-    -- thunk of all the other programs to evaluate
-    programs <- replicateM (view stopAfter config - 1)
-                           (newProgram 10)
+     programs <- replicateM (view stopAfter config - 1) . newProgram $ 10
 
 
-    -- Evaluate all of them, keep the best one
-    (best, _) <- foldM (\(_bp, _bf) p -> evalP config worldF _bf _bp blackProg p) e programs
-    return best
+     -- Evaluate all of them, keep the best one
+     (best, _) <- foldM (\(_bp, _bf) p -> evalP config worldF _bf _bp blackProg p) e programs
+     return best
 
--- given a program and it's score, and another program, evaluate the score of
--- the second program and compare it to the score of the first. The best one is
--- kept and the other is discarded.
+-- | Will compare the result of a program to the score of the current best
+-- program.
 evalP
   :: GeneticConfig   -- ^ configuration of the randomised search
   -> String          -- ^ the world map, as a string
@@ -67,26 +69,19 @@ evalP
   -> AntInstructions -- ^ Default program to benchmark against, for the black colony
   -> [Command L]     -- ^ The new program to test
   -> IO ([Command L], Fitness)
-evalP config worldF _fitness1 prog1 blackProg prog2 =
-  do
-    _fitness2 <- fitness config worldF prog2 blackProg
-    putStrLn ("Comparing a program with score " ++ show _fitness1 ++ " to one that has fitness " ++ show _fitness2)
+evalP config worldF _fit1 prog1 blackProg prog2 =
+  do _fit2 <- fitness config worldF prog2 blackProg
+     putStrLn ("Comparing a program with score " ++ show _fit1 ++ " to one that has fitness " ++ show _fit2)
 
-    return $ case _fitness1 `compare` _fitness2 of
-      LT -> (prog2, _fitness2)
-      EQ -> (prog1, _fitness1)
-      GT -> (prog1, _fitness1)
+     return $ case _fit1 `compare` _fit2 of
+       LT -> (prog2, _fit2)
+       _  -> (prog1, _fit1)
 
--- | Evaluate the program, use the final score as fitness
+-- | Evaluate the program and extact the fitness.
 fitness
-  :: GeneticConfig
-  -> String
-  -> [Command L]
-  -> AntInstructions
-  -> IO Fitness
+  :: GeneticConfig -> String -> [Command L] -> AntInstructions -> IO Fitness
 fitness config worldF prog blackProg  =
-  do
-    gstate  <- initGameState 0 worldF prog blackProg
-    gstate' <- runNRounds (view numRoundsPerGeneration config) gstate
-    return . redScore $ foodAdmin gstate'
+  do gstate  <- initGameState 0 worldF prog blackProg
+     gstate' <- runNRounds (view numRoundsPerGeneration config) gstate
+     return . redScore $ foodAdmin gstate'
 
