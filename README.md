@@ -21,13 +21,13 @@ risk.
 In order to run the testsuit use `stack test`. May be warned that the test using
 the simulator takes considerable time to run.
 
-    + Spec.hs: This file is used to test our Quickcheck properties. In the first
-    one we test if the generated code is valid. The second checks if the
-    optimized code is still valid. In the last we check if the final state of
-    the similulor is the same for the optimized code and the original code.
+  + Spec.hs: This file is used to test our Quickcheck properties. In the first
+  one we test if the generated code is valid. The second checks if the
+  optimized code is still valid. In the last we check if the final state of
+  the similulor is the same for the optimized code and the original code.
 
-    + Spec/Optimization.hs: This file contains random generation of optimizations
-                            for testing purposes.
+  + Spec/Optimization.hs: This file contains random generation of optimizations
+                          for testing purposes.
 
 
 ### Library (folder src)
@@ -42,8 +42,6 @@ the simulator takes considerable time to run.
 
   + Strategy.hs: In this file we implemented our strategy.
 
-
-  + Simulator <- This is a copy of the original ant_similator.
 
   + Ant
     - Arbitrary.hs: Random generation of sized Ant programs for
