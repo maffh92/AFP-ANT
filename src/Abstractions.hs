@@ -144,6 +144,34 @@ doOnTheDir cond ah le ri =
         ,( leftAhead  :=: cond, le)
         ,( rightAhead :=: cond, ri)]
 
+
+moveAs :: (MonadFix m, Label l)
+       => Condition
+       -> AntT m l ()
+moveAs c =
+  doOnTheDir c
+    (redo move_)
+    (cross left right)
+    (cross right left)
+    where
+      cross d1 d2 = do turn d1
+                       redo move_
+                       turn d2
+                       redo move_
+
+avoid :: (MonadFix m, Label l) => AntT m l ()
+avoid = do
+  l <- label
+  choose [escape l left right, escape l right left, nop]
+  where
+    escape l d1 d2 = do
+      turn d1
+      move (turnAll >> move_ (turnAll >> turn d2 >> goto l) >> turnAll >> turn d2)
+           (turn d2)
+
+turnAll :: (MonadFix m, Label l) => AntT m l ()
+turnAll = for 3 (turn left)
+
 --------------------------------------------------------------------------------
   -- Randomness combinators
 
