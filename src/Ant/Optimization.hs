@@ -1,3 +1,10 @@
+{-| 
+Module: Optimization
+Description: Optimizations
+
+This module contains optimizations that can be done on programs.
+-}
+
 module Ant.Optimization
   ( Optimization
   , Opt
@@ -7,15 +14,14 @@ module Ant.Optimization
   ) where
 
 import           Ant.Monad
-import           Ant.Base
-import           Control.Lens  hiding (uncons)
-import           Control.Monad ((>=>))
-import           Data.Foldable
-import           Data.List     (uncons, (\\), sort)
-import qualified Data.Map      as M
-import           Data.Maybe    (maybeToList)
-import qualified Data.Set      as S
 import qualified Control.Category as C
+import           Control.Lens     hiding (uncons)
+import           Control.Monad    ((>=>))
+import           Data.Foldable
+import           Data.List        (sort, uncons, (\\))
+import qualified Data.Map         as M
+import           Data.Maybe       (maybeToList)
+import qualified Data.Set         as S
 
 
 --------------------------------------------------------------------------------
@@ -24,6 +30,7 @@ import qualified Control.Category as C
 -- | An optimization is a transformation Program to Program
 newtype Opt l1 l2 = Opt { unOpt :: Program l1 -> Program l2 }
 
+-- | An optimization
 type Optimization l = Opt l l
 
 -- This class give us composition of optimizations
@@ -38,12 +45,13 @@ applyOpt = unOpt
 --------------------------------------------------------------------------------
   -- Unreachable code optimization
 
+-- | Optimization that removes unreachable code
 unreachableOpt :: Label l => Optimization l
 unreachableOpt = Opt $ closeGaps . \prog ->
   prog & commands %~ flip (foldl (flip M.delete))
                           (unreachable prog)
 
--- All labels that are reachable from the entry point.
+-- | Find all labels that are reachable from the entry point.
 reachable :: Ord l => Program l -> [l]
 reachable prog = reach (S.singleton (prog ^. entry))
                          (prog ^. entry)
@@ -61,6 +69,7 @@ unreachable prog = M.keys (prog ^. commands) \\ reachable prog
 --------------------------------------------------------------------------------
   -- Duplicate code optimization
 
+-- | Optimization that removes duplicate code
 duplicateCodeOpt :: Label l => Optimization l
 duplicateCodeOpt = Opt $ renameEntryPoint z . \prog ->
   let (dups, upd) = duplicated prog
@@ -77,9 +86,6 @@ renameEntryPoint new prog =
    in prog & entry .~ new
            & commands %~ (\cmds -> let m = M.map (fmap (\x -> if x==old then new else x)) cmds
                                     in M.insert z (m M.! old) $ M.delete old m)
-
-partial :: (a -> Bool) -> a -> Maybe a
-partial p x = if p x then Just x else Nothing
 
 -- | All labels that are duplicated plus a function to update
 -- the labels
@@ -99,6 +105,12 @@ closeGaps :: Label l => Program l -> Program l
 closeGaps prog = prog & commands .~ newCmds & entry %~ upd
    where cmds       = prog ^. commands
          lbls       = M.keys cmds
-         mapping'   = M.fromList $ zip (sort lbls) (iterate s z)
+         mapping'   = M.fromList $ zip (sort lbls) (iterate su z)
          upd lbl    = M.findWithDefault lbl lbl mapping'
          newCmds    = M.mapKeys upd $ M.map (fmap upd) cmds
+
+-- | Given a predicate transform a value a into
+-- either Nothing (if false) or Just a
+partial :: (a -> Bool) -> a -> Maybe a
+partial p x = if p x then Just x else Nothing
+

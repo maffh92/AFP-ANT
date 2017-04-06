@@ -8,12 +8,9 @@ module Simulator
   , readInstructions
   ) where
 
-import           Control.Lens
-import           Control.Monad       (replicateM_)
 import           Control.Monad.State
 import           Data.Array.IO
 import           Data.Char           (isDigit, toUpper)
-import qualified Data.Map            as M
 import qualified Data.Set            as S
 
 import           Simulator.Base
@@ -29,16 +26,24 @@ toAntInstructions cmds =
    newListArray (0 , length cmds - 1)
                 (map (fmap toInt) cmds)
 
--- | Compare two GameState for Equivalencea.
+-- | Compare two GameState for equivalencea.
 -- Because under the hood uses IOArray this has
 -- to leave in IO.
 (=~=) :: GameState -> GameState -> IO Bool
-gs1 =~= gs2 = liftM2 (==) (getElems (world gs1)) (getElems (world gs2))
+gs1 =~= gs2 =
+  -- Equality on the results
+  ((foodAdmin gs1 == foodAdmin gs2) &&) <$>
+  -- Equality on the world final state
+  liftM2 (==) (getElems (world gs1)) (getElems (world gs2))
+
+runRound :: GameState -> IO GameState
+runRound = runSimulator oneRound
 
 runNRounds :: Int -> GameState -> IO GameState
-runNRounds n = runSimulator (replicateM_ n oneRound)
+runNRounds n =
+  execStateT (replicateM n $ get >>= liftIO . runRound >>= put)
 
--- | Get a initial game state.
+-- | Initialize game state.
 initGameState :: Label l
               => Int              -- ^ Random seed
               -> String           -- ^ String representing the world
