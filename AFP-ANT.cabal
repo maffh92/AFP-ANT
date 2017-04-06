@@ -5,7 +5,7 @@ version:             0.1.0.0
 homepage:            https://github.com/maffh92/AFP-ANT
 license:             BSD3
 license-file:        LICENSE
-author:              Martijn Fleuren, Marinus Oostegard,
+author:              Martijn Fleuren, Marinus Oosters,
                      Carlos Tomé Cortiñas & Matthew Swart
 -- maintainer:          example@example.com
 copyright:           2017 The authors above
@@ -26,8 +26,8 @@ library
                        Abstractions,
                        Strategy,
                        Simulator,
-                       Genetic,
-                       Genetic.Evolve
+                       RandomSearch,
+                       RandomSearch.Search
   build-depends:       base >= 4.7 && < 5,
                        containers,
                        lens,
