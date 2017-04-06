@@ -26,7 +26,6 @@ library
                        Abstractions,
                        Strategy,
                        Simulator,
-                       Examples,
                        Genetic,
                        Genetic.Evolve
   build-depends:       base >= 4.7 && < 5,

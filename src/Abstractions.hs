@@ -1,5 +1,13 @@
 {-# LANGUAGE RecursiveDo #-}
 
+{-|
+Module: Abstractions
+Description: Higher-level abstractions.
+
+This module contains higher-level abstractions using the low-level
+ant commands.
+
+-}
 module Abstractions where
 
 import           Ant
@@ -22,11 +30,11 @@ loop cmd = mdo
 redo :: MonadFix m => (AntT m l () -> AntT m l a) -> AntT m l ()
 redo cmd = loop (\ct brk -> cmd ct >> brk)
 
-
+-- | For loop
 for :: (Label l, MonadFix m) => Int -> AntT m l () -> AntT m l ()
 for = replicateM_
--- | Always
 
+-- | Datatype for nested conditions.
 data SenseTest = SenseDir  :=: Condition
                | SenseTest :&: SenseTest
                | SenseTest :|: SenseTest
@@ -118,11 +126,13 @@ optimizeBranches b1 b2 main = mdo
 --------------------------------------------------------------------------------
   -- Conditional combinators
 
+-- | Run the code associated with the first test that succeeds.
 caseM :: (MonadFix m, Label l)
           => [(SenseTest , AntT m l ())]
           -> AntT m l ()
 caseM = foldr (uncurry if') (return ())
 
+-- | Check what is ahead of the ant, and run the correspodning code.
 doOnTheDir ::(MonadFix m, Label l)
            =>  Condition
            -> AntT m l ()
@@ -133,6 +143,34 @@ doOnTheDir cond ah le ri =
   caseM [( ahead      :=: cond, ah)
         ,( leftAhead  :=: cond, le)
         ,( rightAhead :=: cond, ri)]
+
+
+moveAs :: (MonadFix m, Label l)
+       => Condition
+       -> AntT m l ()
+moveAs c =
+  doOnTheDir c
+    (redo move_)
+    (cross left right)
+    (cross right left)
+    where
+      cross d1 d2 = do turn d1
+                       redo move_
+                       turn d2
+                       redo move_
+
+avoid :: (MonadFix m, Label l) => AntT m l ()
+avoid = do
+  l <- label
+  choose [escape l left right, escape l right left, nop]
+  where
+    escape l d1 d2 = do
+      turn d1
+      move (turnAll >> move_ (turnAll >> turn d2 >> goto l) >> turnAll >> turn d2)
+           (turn d2)
+
+turnAll :: (MonadFix m, Label l) => AntT m l ()
+turnAll = for 3 (turn left)
 
 --------------------------------------------------------------------------------
   -- Randomness combinators
@@ -181,6 +219,7 @@ pickup__ :: (MonadFix m, Label l)
          => AntT m l ()
 pickup__ = pickup (return ()) (return ())
 
+-- | Sense w/o 'else' branch
 sense_ :: (MonadFix m, Label l)
        => SenseDir
        -> Condition
