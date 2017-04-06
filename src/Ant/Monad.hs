@@ -58,8 +58,8 @@ import qualified Data.Set                   as S (fromList, (\\))
 
 -- | The class of Labels.
 class Ord l => Label l where
-  z :: l
-  s :: l -> l
+  z  :: l
+  su :: l -> l
   toInt :: l -> Int
 
 
@@ -71,8 +71,8 @@ makeLenses ''L
 
 -- | Label instance for L
 instance Label L where
-  z     = L 0
-  s     = lab %~ (+1)
+  z      = L 0
+  su     = lab %~ (+1)
   toInt = view lab
 
 -- | Show a label
@@ -150,7 +150,7 @@ addCmd :: (MonadFix m, Label l)
        => Command l -> AntT m l ()
 addCmd cmd = do
   i <- getPast
-  modifyForwards  s
+  modifyForwards  su
   modifyBackwards (\prog -> prog & commands %~ M.insert i cmd
                                  & entry .~ i)
 

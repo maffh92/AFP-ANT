@@ -20,7 +20,7 @@ instance Label l => Arbitrary (AntMTest l) where
 
 genProgram :: Label l => Int -> Gen [Command l]
 genProgram n =
-  let lbs = take n (iterate s z)
+  let lbs = take n (iterate su z)
   in  replicateM n (genCommand lbs)
 
 genCommand :: Label l => [l] -> Gen (Command l)

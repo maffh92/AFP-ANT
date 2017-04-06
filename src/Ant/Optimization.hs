@@ -77,9 +77,6 @@ renameEntryPoint new prog =
            & commands %~ (\cmds -> let m = M.map (fmap (\x -> if x==old then new else x)) cmds
                                     in M.insert z (m M.! old) $ M.delete old m)
 
-partial :: (a -> Bool) -> a -> Maybe a
-partial p x = if p x then Just x else Nothing
-
 -- | All labels that are duplicated plus a function to update
 -- the labels
 duplicated :: (Ord l, Label l) => Program l -> ([l], l -> l)
@@ -98,6 +95,12 @@ closeGaps :: Label l => Program l -> Program l
 closeGaps prog = prog & commands .~ newCmds & entry %~ upd
    where cmds       = prog ^. commands
          lbls       = M.keys cmds
-         mapping'   = M.fromList $ zip (sort lbls) (iterate s z)
+         mapping'   = M.fromList $ zip (sort lbls) (iterate su z)
          upd lbl    = M.findWithDefault lbl lbl mapping'
          newCmds    = M.mapKeys upd $ M.map (fmap upd) cmds
+
+-- | Given a predicate transform a value a into
+-- either Nothing (if false) or Just a
+partial :: (a -> Bool) -> a -> Maybe a
+partial p x = if p x then Just x else Nothing
+
