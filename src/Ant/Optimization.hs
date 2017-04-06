@@ -1,3 +1,10 @@
+{-| 
+Module: Optimization
+Description: Optimizations
+
+This module contains optimizations that can be done on programs.
+-}
+
 module Ant.Optimization
   ( Optimization
   , Opt
@@ -23,6 +30,7 @@ import qualified Data.Set         as S
 -- | An optimization is a transformation Program to Program
 newtype Opt l1 l2 = Opt { unOpt :: Program l1 -> Program l2 }
 
+-- | An optimization
 type Optimization l = Opt l l
 
 -- This class give us composition of optimizations
@@ -37,12 +45,13 @@ applyOpt = unOpt
 --------------------------------------------------------------------------------
   -- Unreachable code optimization
 
+-- | Optimization that removes unreachable code
 unreachableOpt :: Label l => Optimization l
 unreachableOpt = Opt $ closeGaps . \prog ->
   prog & commands %~ flip (foldl (flip M.delete))
                           (unreachable prog)
 
--- All labels that are reachable from the entry point.
+-- | Find all labels that are reachable from the entry point.
 reachable :: Ord l => Program l -> [l]
 reachable prog = reach (S.singleton (prog ^. entry))
                          (prog ^. entry)
@@ -60,6 +69,7 @@ unreachable prog = M.keys (prog ^. commands) \\ reachable prog
 --------------------------------------------------------------------------------
   -- Duplicate code optimization
 
+-- | Optimization that removes duplicate code
 duplicateCodeOpt :: Label l => Optimization l
 duplicateCodeOpt = Opt $ renameEntryPoint z . \prog ->
   let (dups, upd) = duplicated prog
