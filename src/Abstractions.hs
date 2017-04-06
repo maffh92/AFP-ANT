@@ -1,5 +1,13 @@
 {-# LANGUAGE RecursiveDo #-}
 
+{-|
+Module: Abstractions
+Description: Higher-level abstractions.
+
+This module contains higher-level abstractions using the low-level
+ant commands.
+
+-}
 module Abstractions where
 
 import           Ant
@@ -22,11 +30,11 @@ loop cmd = mdo
 redo :: MonadFix m => (AntT m l () -> AntT m l a) -> AntT m l ()
 redo cmd = loop (\ct brk -> cmd ct >> brk)
 
-
+-- | For loop
 for :: (Label l, MonadFix m) => Int -> AntT m l () -> AntT m l ()
 for = replicateM_
--- | Always
 
+-- | Datatype for nested conditions.
 data SenseTest = SenseDir  :=: Condition
                | SenseTest :&: SenseTest
                | SenseTest :|: SenseTest
@@ -118,11 +126,13 @@ optimizeBranches b1 b2 main = mdo
 --------------------------------------------------------------------------------
   -- Conditional combinators
 
+-- | Run the code associated with the first test that succeeds.
 caseM :: (MonadFix m, Label l)
           => [(SenseTest , AntT m l ())]
           -> AntT m l ()
 caseM = foldr (uncurry if') (return ())
 
+-- | Check what is ahead of the ant, and run the correspodning code.
 doOnTheDir ::(MonadFix m, Label l)
            =>  Condition
            -> AntT m l ()
@@ -181,6 +191,7 @@ pickup__ :: (MonadFix m, Label l)
          => AntT m l ()
 pickup__ = pickup (return ()) (return ())
 
+-- | Sense w/o 'else' branch
 sense_ :: (MonadFix m, Label l)
        => SenseDir
        -> Condition
