@@ -31,9 +31,11 @@ highWayMakers =
     , makeHighway two rock home [left]
     ]
 
+-- Go to the enemies base and steal their food
 stealFood :: (MonadFix m, Label l) => AntT m l ()
 stealFood = forever $ search Nothing foeHome >> searchForFood
 
+--Tries to find food and bring it to home
 bringFood :: (MonadFix m, Label l) => AntT m l ()
 bringFood = do
   s <- label
@@ -48,7 +50,6 @@ bringFood = do
   redo move_
   followTrail s
   goto s
-
 
 guardFood :: (MonadFix m, Label l) => AntT m l ()
 guardFood = do
@@ -107,16 +108,8 @@ searchForFood = do
       (for 3 (move_ avoid)    >> drop')
       (move_ avoid >> turnAll >> goto l)
 
-guardHome :: (MonadFix m, Label l) => AntT m l ()
-guardHome = do
-  search Nothing rock
-  search Nothing home
-  forever $ do
-    mark one
-    choose [twice left, twice right]
-    search Nothing (marker one)
-      where twice d = turn d >> turn d
 
+--In the initial search for food we do not check for food marker. However, in the second run we also check for marker food
 searchForFood2 :: (MonadFix m, Label l) => l -> AntT m l ()
 searchForFood2 l = do
   while (Not (ahead :=: food :|: leftAhead :=: food :|: rightAhead :=: food))
@@ -132,6 +125,7 @@ searchForFood2 l = do
   moveAs food
 
 
+--Followtrail tries to follow some foodtrail
 followTrail :: (MonadFix m, Label l) => l -> AntT m l ()
 followTrail l = do
   _trail <- label
@@ -144,6 +138,7 @@ followTrail l = do
           ((for 2 $ turn left) >> clearTrail zero >> searchForFood2 _trail)
 
 
+--Given some marker, this function will remove the trail
 clearTrail :: (MonadFix m, Label l) => Marker -> AntT m l ()
 clearTrail m  = do
   while ((ahead :=: (marker m)) :|: (leftAhead :=: (marker m))  :|: (rightAhead :=: (marker m))) 
