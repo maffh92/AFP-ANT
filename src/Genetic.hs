@@ -3,8 +3,8 @@
 -}
 
 
-module Genetic
-  ( module Genetic.Evolve
+module RandomSearch
+  ( module RandomSearch.Search
   ) where
 
-import Genetic.Evolve
+import RandomSearch.Search

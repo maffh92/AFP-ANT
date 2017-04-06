@@ -1,8 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Genetic.Evolve
+module RandomSearch.Search
   ( newProgram
   , search
-  , defaultGeneticConfig
+  , defaultRandomSearchConfig
   , fitness
   ) where
 
@@ -11,25 +11,24 @@ import Ant.Base
 import Ant.Monad
 import Control.Lens
 import Control.Monad
-import Data.Array.IO
 import Simulator
 import Simulator.Base
-import Strategy
 import Test.QuickCheck
 
 -- | Configuration object with lenses
-data GeneticConfig = GeneticConfig
+data RandomSearchConfig = RandomSearchConfig
   { _numRoundsPerGeneration :: Int -- Simulate this many rounds per program
   , _stopAfter              :: Int -- Stop search after this many generated programs
   , _linesPerFile           :: Int -- Amount of lines per file
   } deriving (Eq, Show)
 
-makeLenses ''GeneticConfig
+makeLenses ''RandomSearchConfig
 
 -- alias for documentation / readability
 type Fitness = Int
 
-defaultGeneticConfig = GeneticConfig
+defaultRandomSearchConfig :: RandomSearchConfig
+defaultRandomSearchConfig = RandomSearchConfig
   { _numRoundsPerGeneration = 100000
   , _stopAfter              = 1000
   , _linesPerFile           = 10000
@@ -43,7 +42,7 @@ newProgram = generate . genProgram
 -- a startpoint and its fitness, after which it will generate (N-1) other
 -- programs and compare it to the current best program. If to programs are equal
 -- in fitness, the eldest is kept.
-search :: GeneticConfig -> IO [Command L]
+search :: RandomSearchConfig -> IO [Command L]
 search config =
   do prog1     <- newProgram (view linesPerFile config)
      worldF    <- readFile "../test-data/sample0.world"
@@ -62,7 +61,7 @@ search config =
 -- | Will compare the result of a program to the score of the current best
 -- program.
 evalP
-  :: GeneticConfig   -- ^ configuration of the randomised search
+  :: RandomSearchConfig   -- ^ configuration of the randomised search
   -> String          -- ^ the world map, as a string
   -> Fitness         -- ^ Fitness of the best program so far
   -> [Command L]     -- ^ Current best program
@@ -79,7 +78,7 @@ evalP config worldF _fit1 prog1 blackProg prog2 =
 
 -- | Evaluate the program and extact the fitness.
 fitness
-  :: GeneticConfig -> String -> [Command L] -> AntInstructions -> IO Fitness
+  :: RandomSearchConfig -> String -> [Command L] -> AntInstructions -> IO Fitness
 fitness config worldF prog blackProg  =
   do gstate  <- initGameState 0 worldF prog blackProg
      gstate' <- runNRounds (view numRoundsPerGeneration config) gstate
