@@ -1,4 +1,9 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-|
+Module: RandomSearch.Search
+Description: Random search to generate Ant programs
+-}
+
 module RandomSearch.Search
   ( newProgram
   , search
@@ -24,9 +29,10 @@ data RandomSearchConfig = RandomSearchConfig
 
 makeLenses ''RandomSearchConfig
 
--- alias for documentation / readability
+-- | alias for documentation / readability
 type Fitness = Int
 
+-- | Configuration for random search
 defaultRandomSearchConfig :: RandomSearchConfig
 defaultRandomSearchConfig = RandomSearchConfig
   { _numRoundsPerGeneration = 100000

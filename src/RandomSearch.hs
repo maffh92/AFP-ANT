@@ -1,5 +1,6 @@
-{-
-  Interface to the Evolve module for genetic search
+{-|
+Module: RandomSearch
+Description: Interface to the RandomSearch module for random search
 -}
 
 
