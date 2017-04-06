@@ -7,14 +7,14 @@ module Ant.Optimization
   ) where
 
 import           Ant.Monad
-import           Control.Lens  hiding (uncons)
-import           Control.Monad ((>=>))
-import           Data.Foldable
-import           Data.List     (uncons, (\\), sort)
-import qualified Data.Map      as M
-import           Data.Maybe    (maybeToList)
-import qualified Data.Set      as S
 import qualified Control.Category as C
+import           Control.Lens     hiding (uncons)
+import           Control.Monad    ((>=>))
+import           Data.Foldable
+import           Data.List        (sort, uncons, (\\))
+import qualified Data.Map         as M
+import           Data.Maybe       (maybeToList)
+import qualified Data.Set         as S
 
 
 --------------------------------------------------------------------------------
