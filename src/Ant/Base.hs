@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE DeriveTraversable #-}
 
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 {-|
 Module: Base
@@ -48,7 +49,7 @@ instance Enum Marker where
     { Zero -> 0; One -> 1; Two -> 2; Three -> 3; Four -> 4; Five -> 5 }
 
   toEnum x = case x `mod` 6 of
-    { 0 -> Zero; 1 -> One; 2 -> Two; 3 -> Three; 4 -> Four; 5 -> Five }
+    { 0 -> Zero; 1 -> One; 2 -> Two; 3 -> Three; 4 -> Four; 5 -> Five; }
 
 -- | Ord instance for marker
 instance Ord Marker where

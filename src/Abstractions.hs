@@ -173,11 +173,11 @@ turnAll = for 3 (turn left)
 
 -- | Select one of the programs uniformly at random and run it
 choose :: (Label l, MonadFix m) => [AntT m l a] -> AntT m l ()
-choose cmds = loop (\cont brk -> choose' brk cmds >> brk)
+choose cmds = loop (\_ brk -> choose' brk cmds >> brk)
  where
-    choose' _   []          = return ()
-    choose' end [cmd]       = cmd >> end
-    choose' end (cmd:cmds)  = flip' (length cmds+1) (cmd >> end) (choose' end cmds)
+    choose' _   []      = return ()
+    choose' end [c]     = c >> end
+    choose' end (c:cs)  = flip' (length cs+1) (c >> end) (choose' end cs)
 
 -- | Select a program to run according to its total weight
 -- moreless mirrors quickcheck frequency combinator.

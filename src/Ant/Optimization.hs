@@ -7,7 +7,6 @@ module Ant.Optimization
   ) where
 
 import           Ant.Monad
-import           Ant.Base
 import           Control.Lens  hiding (uncons)
 import           Control.Monad ((>=>))
 import           Data.Foldable
