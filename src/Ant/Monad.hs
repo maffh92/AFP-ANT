@@ -1,6 +1,13 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE RecursiveDo                #-}
 {-# LANGUAGE TemplateHaskell            #-}
+
+{-| 
+Module: Monad
+Description: Monad that constructs ant programs
+
+This monad is used to construct ant programs in a structured manner.
+-}
 module Ant.Monad
   (
   -- * Monad
@@ -62,11 +69,13 @@ newtype L = L { _lab :: Int }
 
 makeLenses ''L
 
+-- | Label instance for L
 instance Label L where
   z     = L 0
   s     = lab %~ (+1)
   toInt = view lab
 
+-- | Show a label
 instance Show L where
   show = show . view lab
 
@@ -170,33 +179,40 @@ singleCmd cmd =
 --------------------------------------------------------------------------------
 -- Non branching commands
 
+-- | Mark
 mark :: (MonadFix m, Label l) => Marker -> AntT m l ()
 mark = singleCmd .  Mark
 
+-- | Unmark
 unmark :: (MonadFix m, Label l) => Marker -> AntT m l ()
 unmark = singleCmd . Unmark
 
+-- | Drop
 drop' :: (MonadFix m, Label l) => AntT m l ()
 drop' = singleCmd Drop
 
+-- | Turn
 turn :: (MonadFix m, Label l) => LeftOrRight -> AntT m l ()
 turn = singleCmd . Turn
 
 --------------------------------------------------------------------------------
 -- Branching commands
 
+-- | Move, and run the appropriate branch depending on success or failure
 move :: (MonadFix m, Label l)
      => AntT m l () -- ^ Success
      -> AntT m l () -- ^ Failure
      -> AntT m l ()
 move = branchingCmd Move
 
+-- | Pick up, and run the appropriate branch depending on success or failure
 pickup :: (MonadFix m, Label l)
        => AntT m l () -- ^ Success
        -> AntT m l () -- ^ Failure
        -> AntT m l ()
 pickup = branchingCmd PickUp
 
+-- | Sense, and run the appropriate branch
 sense :: (MonadFix m, Label l)
      => SenseDir
      -> Condition
@@ -205,6 +221,7 @@ sense :: (MonadFix m, Label l)
      -> AntT m l ()
 sense c s' = branchingCmd (\su fa -> Sense c su fa s')
 
+-- | Flip (run the first branch with 1/N probability, the second branch otherwise)
 flip' :: (MonadFix m, Label l)
      => Int
      -> AntT m l () -- ^ Success
