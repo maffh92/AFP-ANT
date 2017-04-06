@@ -219,7 +219,7 @@ sense :: (MonadFix m, Label l)
      -> AntT m l () -- ^ Success
      -> AntT m l () -- ^ Failure
      -> AntT m l ()
-sense c s' = branchingCmd (\su fa -> Sense c su fa s')
+sense c s' = branchingCmd (\success failure -> Sense c success failure s')
 
 -- | Flip (run the first branch with 1/N probability, the second branch otherwise)
 flip' :: (MonadFix m, Label l)
