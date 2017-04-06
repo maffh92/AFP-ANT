@@ -49,7 +49,7 @@ search config =
      worldF    <- readFile "../test-data/sample0.world"
      blackProg <- readInstructions "../test-data/blackant.ant"
 
-     _fit1 <- fitness config worldF prog blackProg
+     _fit1 <- fitness config worldF prog1 blackProg
      let e = (prog1, _fit1)
 
      programs <- replicateM (view stopAfter config - 1) . newProgram $ 10
